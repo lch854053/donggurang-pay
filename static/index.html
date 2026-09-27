@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0874be">
+  <meta name="description" content="내 주변 동구랑페이 가맹점을 쉽고 빠르게 찾아보세요.">
+  <title>동구랑페이 가맹점 지도</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="brand-bar">
+      <a class="brand" href="#" aria-label="동구랑페이 홈">
+        <img class="brand-logo" src="./donggu-logo.jpg" alt="전남광주통합특별시 동구">
+        <span><strong>동구랑<span>페이</span></strong><small>전남광주통합특별시 동구 지역화폐</small></span>
+      </a>
+      <div class="header-actions">
+        <a class="admin-link" href="./admin.html">관리자</a>
+        <button class="icon-button" id="helpButton" type="button" aria-label="이용 안내">?</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="search-panel" aria-label="가맹점 검색">
+        <div class="brand-card" aria-label="동구랑페이 브랜드 안내">
+          <span class="spark spark-one" aria-hidden="true">✦</span>
+          <span class="spark spark-two" aria-hidden="true">✦</span>
+          <div class="mini-skyline" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="brand-card-copy">
+            <p>광주 동구 어디서나 즐겁게</p>
+            <h1><span>동구랑</span><strong>페이</strong></h1>
+          </div>
+          <div class="rainbow" aria-hidden="true"></div>
+          <div class="hill hill-back" aria-hidden="true"></div>
+          <div class="hill hill-front" aria-hidden="true"></div>
+          <div class="flower flower-one" aria-hidden="true">✿</div>
+          <div class="flower flower-two" aria-hidden="true">✿</div>
+        </div>
+
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">DONG-GURANG PAY MAP</p>
+            <h2>우리 동네 가맹점 찾기</h2>
+          </div>
+          <p class="data-count"><strong id="totalMerchantCount">4,038</strong><span>가맹점</span></p>
+        </div>
+
+        <div class="search-tabs" role="tablist" aria-label="검색 방식">
+          <button class="tab active" id="nearbyTab" type="button" role="tab" aria-selected="true" data-tab="nearby">내 주변</button>
+          <button class="tab" id="searchTab" type="button" role="tab" aria-selected="false" data-tab="search">직접 검색</button>
+        </div>
+
+        <form class="search-form" id="searchForm">
+          <label class="search-box">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg>
+            <input id="searchInput" type="search" autocomplete="off" placeholder="가맹점명 또는 주소를 입력하세요" aria-label="가맹점명 또는 주소">
+            <button class="search-submit" type="submit" aria-label="검색">검색</button>
+          </label>
+          <p class="search-hint" id="searchHint">상호명, 주소, 업종을 함께 검색합니다.</p>
+        </form>
+
+        <div class="filter-row" aria-label="검색 조건">
+          <button class="filter-chip active" type="button" data-filter="category" data-value="all">
+            <span class="chip-icon">#</span><span id="categoryLabel">전체 업종</span><span class="chevron">⌄</span>
+          </button>
+          <button class="filter-chip" type="button" data-filter="radius" data-value="1000">
+            <span class="chip-icon">◎</span><span id="radiusLabel">1km 이내</span><span class="chevron">⌄</span>
+          </button>
+        </div>
+
+        <div class="panel-status">
+          <span><i class="status-dot"></i><strong id="resultCount">0</strong>개의 가맹점</span>
+          <button id="sortButton" type="button">가까운 순 <span>⌄</span></button>
+        </div>
+
+        <div class="merchant-list" id="merchantList" aria-live="polite"></div>
+      </section>
+
+      <section class="map-area" aria-label="가맹점 지도">
+        <div id="map"></div>
+        <div class="map-topbar">
+          <button class="mobile-search-trigger" id="mobileSearchTrigger" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg>
+            <span id="mobileSearchText">가맹점명 또는 주소 검색</span>
+          </button>
+          <button class="location-button" id="locationButton" type="button" aria-label="내 위치로 이동" title="내 위치로 이동">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><circle cx="12" cy="12" r="8"></circle><path d="M12 2V4M12 20v2M2 12h2M20 12h2"></path></svg>
+          </button>
+        </div>
+        <button class="research-button" id="researchButton" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 5v6h-6"></path></svg>
+          현 지도에서 재검색
+        </button>
+        <div class="map-notice" id="mapNotice"><strong>2026.09.07 기준</strong><span>정확한 좌표 변환 전, 행정동 기준 위치입니다.</span></div>
+        <div class="map-legend"><span></span> 동구랑페이 가맹점</div>
+      </section>
+    </main>
+  </div>
+
+  <div class="mobile-sheet" id="mobileSheet" aria-hidden="true">
+    <button class="sheet-backdrop" type="button" data-close-sheet aria-label="닫기"></button>
+    <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header"><h2 id="sheetTitle">가맹점 찾기</h2><button type="button" data-close-sheet aria-label="닫기">×</button></div>
+      <div id="mobileSearchMount"></div>
+    </div>
+  </div>
+
+  <div class="select-sheet" id="selectSheet" aria-hidden="true">
+    <button class="sheet-backdrop" type="button" data-close-select aria-label="닫기"></button>
+    <div class="select-card" role="dialog" aria-modal="true">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header"><h2 id="selectTitle">조건 선택</h2><button type="button" data-close-select aria-label="닫기">×</button></div>
+      <div class="select-options" id="selectOptions"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <template id="merchantTemplate">
+    <article class="merchant-card">
+      <button type="button" class="merchant-card-button">
+        <span class="merchant-icon" aria-hidden="true"></span>
+        <span class="merchant-copy">
+          <span class="merchant-head"><strong></strong><em></em></span>
+          <span class="category"></span>
+          <span class="address"></span>
+        </span>
+        <span class="distance"></span>
+      </button>
+    </article>
+  </template>
+
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script src="./merchant-data.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

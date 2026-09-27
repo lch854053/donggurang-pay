@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f3e9">
+  <title>가맹점 데이터 관리 | 동구랑페이</title>
+  <style>
+    @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
+    :root { --ink:#17342d; --muted:#687b74; --green:#126b52; --soft:#e4f2eb; --cream:#f6f3e9; --line:#dfe6e1; --coral:#ec684b; }
+    * { box-sizing:border-box; } body { margin:0; background:var(--cream); color:var(--ink); font-family:Pretendard,"Noto Sans KR",sans-serif; }
+    button,input { font:inherit; } .wrap { width:min(860px,calc(100% - 32px)); margin:0 auto; padding:32px 0 70px; }
+    header { display:flex; align-items:center; justify-content:space-between; margin-bottom:32px; }
+    .brand { display:flex; align-items:center; gap:10px; color:inherit; font-weight:800; text-decoration:none; }
+    .brand i { display:grid; place-items:center; width:38px; height:38px; border-radius:13px 13px 13px 4px; background:var(--green); color:white; font-style:normal; }
+    .back { color:var(--muted); font-size:13px; text-decoration:none; } .intro small { color:var(--coral); font-weight:800; letter-spacing:.12em; }
+    h1 { margin:10px 0 8px; font-size:32px; letter-spacing:-.05em; } .intro p { margin:0 0 26px; color:var(--muted); line-height:1.6; }
+    .card { padding:28px; border:1px solid var(--line); border-radius:22px; background:#fffefb; box-shadow:0 14px 40px rgba(22,52,45,.08); }
+    .notice { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:25px; }
+    .notice div { padding:16px; border-radius:14px; background:#f5f8f5; font-size:12px; line-height:1.5; }
+    .notice strong { display:block; margin-bottom:5px; color:var(--green); font-size:13px; }
+    label { display:block; margin:18px 0 7px; font-size:13px; font-weight:700; }
+    input[type=password] { width:100%; height:48px; padding:0 14px; border:1px solid #cbd7d1; border-radius:12px; outline:0; }
+    input[type=password]:focus { border-color:var(--green); box-shadow:0 0 0 4px rgba(18,107,82,.1); }
+    .drop { position:relative; display:grid; place-items:center; min-height:170px; padding:22px; border:2px dashed #a9bdb4; border-radius:16px; background:#f9fbf8; text-align:center; transition:.2s; }
+    .drop.drag { border-color:var(--green); background:var(--soft); } .drop input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+    .drop-icon { display:grid; place-items:center; width:48px; height:48px; margin:0 auto 10px; border-radius:17px; background:var(--soft); color:var(--green); font-size:22px; font-weight:800; }
+    .drop strong,.drop span { display:block; } .drop span { margin-top:5px; color:var(--muted); font-size:12px; }
+    .file-name { margin:12px 0 0; color:var(--green); font-size:13px; font-weight:700; }
+    .submit { width:100%; height:52px; margin-top:20px; border:0; border-radius:13px; background:var(--green); color:white; cursor:pointer; font-weight:750; }
+    .submit:disabled { opacity:.5; cursor:wait; } .result { display:none; margin-top:18px; padding:15px; border-radius:12px; font-size:13px; line-height:1.55; white-space:pre-line; }
+    .result.show { display:block; } .result.success { background:var(--soft); color:#0a4d3b; } .result.error { background:#fff0eb; color:#a13e29; }
+    .columns { margin-top:24px; padding-top:22px; border-top:1px solid var(--line); } .columns h2 { margin:0 0 10px; font-size:15px; }
+    .tags { display:flex; flex-wrap:wrap; gap:7px; } .tag { padding:7px 9px; border-radius:8px; background:var(--soft); color:var(--green); font-size:11px; font-weight:700; }
+    @media(max-width:600px){ .wrap{padding-top:20px}.notice{grid-template-columns:1fr}.card{padding:20px}h1{font-size:27px} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header><a class="brand" href="./index.html"><i>동</i>동구랑페이</a><a class="back" href="./index.html">지도로 돌아가기 →</a></header>
+    <section class="intro"><small>MERCHANT DATA CONSOLE</small><h1>가맹점 데이터 관리</h1><p>검증을 통과한 엑셀 또는 CSV만 반영됩니다. 업로드하면 기존 가맹점 목록 전체가 새 파일의 내용으로 교체됩니다.</p></section>
+    <form class="card" id="uploadForm">
+      <div class="notice">
+        <div><strong>화이트리스트 저장</strong>지정된 5개 컬럼 외에는 데이터베이스에 저장하지 않습니다.</div>
+        <div><strong>개인정보 패턴 검사</strong>주민번호, 전화번호, 이메일 패턴을 검사하고 탐지 시 차단합니다.</div>
+        <div><strong>원자적 전체 교체</strong>검증이나 변환 실패 시 기존 데이터는 그대로 유지됩니다.</div>
+      </div>
+      <label for="adminKey">관리자 업로드 키</label>
+      <input id="adminKey" type="password" autocomplete="current-password" required placeholder="서버에 설정한 ADMIN_KEY">
+      <label for="excelFile">가맹점 데이터 파일</label>
+      <div class="drop" id="dropZone">
+        <input id="excelFile" type="file" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" required>
+        <div><div class="drop-icon">↑</div><strong>.xlsx 또는 .csv 파일을 선택하세요</strong><span>CSV는 UTF-8·CP949 지원, 최대 10MB</span><p class="file-name" id="fileName"></p></div>
+      </div>
+      <button class="submit" id="submitButton" type="submit">검증 후 가맹점 데이터 교체</button>
+      <div class="result" id="result" role="status"></div>
+      <div class="columns"><h2>저장되는 컬럼</h2><div class="tags"><span class="tag">사업자번호</span><span class="tag">가맹점번호</span><span class="tag">가맹점명</span><span class="tag">사업장주소</span><span class="tag">가맹점업종명</span></div></div>
+    </form>
+  </div>
+  <script>
+    const form=document.querySelector('#uploadForm'),file=document.querySelector('#excelFile'),drop=document.querySelector('#dropZone'),result=document.querySelector('#result'),button=document.querySelector('#submitButton');
+    file.addEventListener('change',()=>document.querySelector('#fileName').textContent=file.files[0]?.name||'');
+    ['dragenter','dragover'].forEach(name=>drop.addEventListener(name,e=>{e.preventDefault();drop.classList.add('drag')}));
+    ['dragleave','drop'].forEach(name=>drop.addEventListener(name,e=>{e.preventDefault();drop.classList.remove('drag')}));
+    form.addEventListener('submit',async e=>{e.preventDefault();if(!file.files[0])return;button.disabled=true;button.textContent='검증 및 주소 변환 중...';result.className='result';
+      const data=new FormData();data.append('file',file.files[0]);
+      try{const response=await fetch('/api/admin/upload',{method:'POST',headers:{'X-Admin-Key':document.querySelector('#adminKey').value},body:data});const payload=await response.json();if(!response.ok)throw new Error(payload.detail||'업로드에 실패했습니다.');result.textContent=`${payload.message}\n총 ${payload.imported.toLocaleString()}개 반영 · 좌표 변환 ${payload.geocoded.toLocaleString()}개 · 변환 실패 ${payload.geocode_failed.toLocaleString()}개`;result.className='result show success';}
+      catch(error){result.textContent=error.message;result.className='result show error';}
+      finally{button.disabled=false;button.textContent='검증 후 가맹점 데이터 교체';}
+    });
+  </script>
+</body>
+</html>

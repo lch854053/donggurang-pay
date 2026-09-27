@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0874be">
+  <title>모바일 시범 화면 | 동구랑페이</title>
+  <style>
+    @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; margin: 0; }
+    body { background: #eaf3f8; color: #282052; font-family: Pretendard, "Noto Sans KR", sans-serif; }
+    .preview { display: grid; grid-template-columns: 390px 320px; justify-content: center; align-items: center; gap: 58px; min-height: 100vh; padding: 36px; }
+    .phone { position: relative; width: 414px; padding: 12px; border: 2px solid #17233a; border-radius: 39px; background: #17233a; box-shadow: 0 30px 70px rgba(21,53,77,.24); }
+    .phone::before { position: absolute; z-index: 2; top: 18px; left: 50%; width: 82px; height: 20px; border-radius: 15px; background: #17233a; content: ""; transform: translateX(-50%); }
+    iframe { display: block; width: 390px; height: 844px; border: 0; border-radius: 28px; background: white; }
+    .copy small { color: #0874be; font-size: 11px; font-weight: 850; letter-spacing: .13em; }
+    .copy h1 { margin: 9px 0 12px; font-size: 34px; line-height: 1.2; letter-spacing: -.055em; }
+    .copy p { margin: 0; color: #657486; font-size: 14px; line-height: 1.7; }
+    .facts { display: grid; gap: 9px; margin: 25px 0; }
+    .fact { display: flex; align-items: center; justify-content: space-between; padding: 13px 15px; border: 1px solid #cfdfE9; border-radius: 13px; background: rgba(255,255,255,.72); font-size: 12px; }
+    .fact strong { color: #0874be; }
+    .actions { display: flex; gap: 8px; }
+    .actions a, .actions button { display: inline-grid; place-items: center; height: 43px; padding: 0 15px; border: 0; border-radius: 11px; background: #0874be; color: white; cursor: pointer; font: inherit; font-size: 12px; font-weight: 750; text-decoration: none; }
+    .actions button { border: 1px solid #bbceda; background: white; color: #526575; }
+    @media (max-width: 760px) {
+      body { overflow: hidden; background: white; }
+      .preview { display: block; min-height: 0; padding: 0; }
+      .phone { width: 100vw; height: 100dvh; padding: 0; border: 0; border-radius: 0; background: white; box-shadow: none; }
+      .phone::before, .copy { display: none; }
+      iframe { width: 100%; height: 100%; border-radius: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="preview">
+    <div class="phone">
+      <iframe id="mobileFrame" src="./index.html?mobile-test=1" title="동구랑페이 모바일 시범 화면" allow="geolocation"></iframe>
+    </div>
+    <section class="copy">
+      <small>MOBILE TEST PREVIEW</small>
+      <h1>모바일 화면<br>시범자료</h1>
+      <p>운영 가맹점과 분리된 테스트용 가맹점 12개로 검색, 업종 필터, 지도 이동과 바텀시트를 확인할 수 있습니다.</p>
+      <div class="facts">
+        <div class="fact"><span>화면 크기</span><strong>390 × 844</strong></div>
+        <div class="fact"><span>시범 가맹점</span><strong>12개</strong></div>
+        <div class="fact"><span>행정구역</span><strong>전남광주통합특별시 동구</strong></div>
+      </div>
+      <div class="actions">
+        <a href="./index.html?mobile-test=1" target="_blank" rel="noopener">전체 화면으로 열기</a>
+        <button type="button" onclick="document.querySelector('#mobileFrame').contentWindow.location.reload()">다시 불러오기</button>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
