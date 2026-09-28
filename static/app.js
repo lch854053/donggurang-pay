@@ -14,11 +14,28 @@ const SAMPLE_MERCHANTS = [
 ];
 
 const MOBILE_SAMPLE_MODE = new URLSearchParams(window.location.search).has("mobile-test");
-const STATIC_MERCHANTS = !MOBILE_SAMPLE_MODE && Array.isArray(window.DONGGURANG_MERCHANTS)
-  ? window.DONGGURANG_MERCHANTS
-  : SAMPLE_MERCHANTS;
 const CATEGORY_GROUP_ORDER = ["음식점·카페", "식품·마트", "패션·뷰티", "의료·건강", "교육·문화", "생활·주거", "스포츠·여가", "기타"];
 const LIST_RENDER_LIMIT = 100;
+const visibleMarkers = new Map();
+let markerUpdateTimer;
+let sizeFrame;
+let lastMapSize = "";
+let forceSizeUpdate = false;
+
+function loadStaticMerchants() {
+  if (MOBILE_SAMPLE_MODE) return Promise.resolve(SAMPLE_MERCHANTS);
+  if (Array.isArray(window.DONGGURANG_MERCHANTS)) return Promise.resolve(window.DONGGURANG_MERCHANTS);
+  return new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = "./merchant-data.js";
+    script.onload = () => resolve(window.DONGGURANG_MERCHANTS || SAMPLE_MERCHANTS);
+    script.onerror = () => {
+      showToast("가맹점 자료를 불러오지 못해 시범자료를 표시합니다.");
+      resolve(SAMPLE_MERCHANTS);
+    };
+    document.head.appendChild(script);
+  });
+}
 
 function categoryGroup(category) {
   const value = String(category || "").replace(/\s+/g, "");
@@ -96,7 +113,7 @@ async function loadConfig() {
   } catch {
     state.config = { tile_provider: "vworld_public", demo: true };
   }
-  state.staticMode = Boolean(state.config.demo && STATIC_MERCHANTS.length);
+  state.staticMode = Boolean(state.config.demo);
   if (state.staticMode) document.querySelector(".admin-link")?.remove();
 }
 
@@ -108,6 +125,9 @@ function initMap() {
     : "https://xdworld.vworld.kr/2d/Base/service/{z}/{x}/{y}.png";
   L.tileLayer(tileUrl, {
     maxZoom: 19,
+    keepBuffer: 3,
+    updateWhenIdle: true,
+    updateWhenZooming: false,
     attribution: "© VWorld"
   }).addTo(state.map);
   L.control.zoom({ position: "bottomright" }).addTo(state.map);
@@ -115,12 +135,51 @@ function initMap() {
     ? L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 46, spiderfyOnMaxZoom: true })
     : L.layerGroup();
   state.map.addLayer(state.markerLayer);
-  state.map.on("moveend", () => $("#researchButton").classList.add("ready"));
+  state.map.on("moveend", () => {
+    $("#researchButton").classList.add("ready");
+    scheduleVisibleMarkers();
+  });
+  // The mobile viewport and the map container can settle after Leaflet's first measurement.
+  requestAnimationFrame(() => requestAnimationFrame(() => invalidateMapSize(true)));
+  window.addEventListener("resize", () => scheduleMapSize(true));
+  window.addEventListener("orientationchange", () => {
+    scheduleMapSize(true);
+    setTimeout(() => scheduleMapSize(true), 300);
+  });
+  window.visualViewport?.addEventListener("resize", () => scheduleMapSize(true));
+  if (typeof ResizeObserver !== "undefined") new ResizeObserver(() => scheduleMapSize()).observe($("#map"));
+}
+
+function invalidateMapSize(force = false) {
+  sizeFrame = null;
+  const mapElement = $("#map");
+  const size = `${mapElement.clientWidth}x${mapElement.clientHeight}`;
+  if (!mapElement.clientWidth || !mapElement.clientHeight) return;
+  if (force || size !== lastMapSize) {
+    lastMapSize = size;
+    state.map.invalidateSize({ pan: false, debounceMoveend: true });
+    scheduleVisibleMarkers();
+  }
+}
+
+function scheduleMapSize(force = false) {
+  forceSizeUpdate ||= force;
+  if (sizeFrame) cancelAnimationFrame(sizeFrame);
+  sizeFrame = requestAnimationFrame(() => {
+    const shouldForce = forceSizeUpdate;
+    forceSizeUpdate = false;
+    invalidateMapSize(shouldForce);
+  });
+}
+
+function scheduleVisibleMarkers() {
+  clearTimeout(markerUpdateTimer);
+  markerUpdateTimer = setTimeout(renderVisibleMarkers, 100);
 }
 
 async function fetchMerchants({ useMapCenter = false } = {}) {
   if (state.staticMode) {
-    if (!state.merchants.length) state.merchants = prepareMerchants(STATIC_MERCHANTS);
+    if (!state.merchants.length) state.merchants = prepareMerchants(await loadStaticMerchants());
     state.filterBounds = useMapCenter ? state.map.getBounds() : null;
     applyClientFilters();
     return;
@@ -148,7 +207,7 @@ async function fetchMerchants({ useMapCenter = false } = {}) {
     applyClientFilters(false);
   } catch {
     state.staticMode = true;
-    state.merchants = prepareMerchants(STATIC_MERCHANTS);
+    state.merchants = prepareMerchants(await loadStaticMerchants());
     state.filterBounds = useMapCenter ? state.map.getBounds() : null;
     showToast("제공된 가맹점 자료로 미리보기 중입니다.");
     applyClientFilters();
@@ -171,11 +230,11 @@ function applyClientFilters(useMapCenter = false) {
   if (state.sortAscending && origin) items = items.sort((a, b) => a.distance - b.distance);
   if (!state.sortAscending) items = items.sort((a, b) => a.name.localeCompare(b.name, "ko-KR"));
   state.filtered = items;
-  renderResults();
+  renderMerchantList();
+  renderVisibleMarkers();
 }
 
-function renderResults() {
-  state.markerLayer.clearLayers();
+function renderMerchantList() {
   const list = $("#merchantList");
   list.replaceChildren();
   $("#resultCount").textContent = state.filtered.length.toLocaleString("ko-KR");
@@ -186,16 +245,8 @@ function renderResults() {
   }
 
   const template = $("#merchantTemplate");
-  const markers = [];
   const listLimit = window.matchMedia("(max-width: 760px)").matches ? 24 : LIST_RENDER_LIMIT;
   state.filtered.forEach((merchant, index) => {
-    const marker = L.marker([merchant.lat, merchant.lng], {
-      icon: L.divIcon({ className: "merchant-marker", html: "<span>동</span>", iconSize: [34, 34], iconAnchor: [17, 34] })
-    });
-    const locationNote = merchant.approximate ? '<p class="popup-note">행정동 기준 임시 위치 · 주소를 확인해 주세요</p>' : "";
-    marker.bindPopup(`<div class="popup-category">${escapeHtml(merchant.category)}</div><h3 class="popup-title">${escapeHtml(merchant.name)}</h3><p class="popup-address">${escapeHtml(merchant.address)}</p>${locationNote}`, { className: "merchant-popup", offset: [0, -24] });
-    markers.push(marker);
-
     if (index >= listLimit) return;
 
     const fragment = template.content.cloneNode(true);
@@ -205,14 +256,18 @@ function renderResults() {
     fragment.querySelector(".address").textContent = merchant.address;
     fragment.querySelector(".distance").textContent = formatDistance(merchant.distance);
     fragment.querySelector("button").addEventListener("click", () => {
+      state.map.once("moveend", () => {
+        renderVisibleMarkers();
+        const marker = visibleMarkers.get(merchant);
+        if (marker) {
+          if (typeof state.markerLayer.zoomToShowLayer === "function") state.markerLayer.zoomToShowLayer(marker, () => marker.openPopup());
+          else marker.openPopup();
+        }
+      });
       state.map.flyTo([merchant.lat, merchant.lng], 18, { duration: .7 });
-      setTimeout(() => marker.openPopup(), 720);
     });
     list.appendChild(fragment);
   });
-
-  if (typeof state.markerLayer.addLayers === "function") state.markerLayer.addLayers(markers);
-  else markers.forEach((marker) => state.markerLayer.addLayer(marker));
 
   if (state.filtered.length > listLimit) {
     const more = document.createElement("p");
@@ -220,6 +275,37 @@ function renderResults() {
     more.textContent = `목록은 ${listLimit.toLocaleString("ko-KR")}개까지 표시됩니다. 검색어와 업종을 선택해 좁혀 보세요.`;
     list.appendChild(more);
   }
+}
+
+function renderVisibleMarkers() {
+  clearTimeout(markerUpdateTimer);
+  if (!state.map || !state.markerLayer) return;
+  const bounds = state.map.getBounds().pad(0.2);
+  const inView = state.filtered.filter((merchant) => bounds.contains([merchant.lat, merchant.lng]));
+  const wanted = new Set(inView);
+  const removed = [];
+  for (const [merchant, marker] of visibleMarkers) {
+    if (!wanted.has(merchant)) {
+      removed.push(marker);
+      visibleMarkers.delete(merchant);
+    }
+  }
+  if (typeof state.markerLayer.removeLayers === "function") state.markerLayer.removeLayers(removed);
+  else removed.forEach((marker) => state.markerLayer.removeLayer(marker));
+
+  const added = [];
+  for (const merchant of inView) {
+    if (visibleMarkers.has(merchant)) continue;
+    const marker = L.marker([merchant.lat, merchant.lng], {
+      icon: L.divIcon({ className: "merchant-marker", html: "<span>동</span>", iconSize: [34, 34], iconAnchor: [17, 34] })
+    });
+    const locationNote = merchant.approximate ? '<p class="popup-note">행정동 기준 임시 위치 · 주소를 확인해 주세요</p>' : "";
+    marker.bindPopup(`<div class="popup-category">${escapeHtml(merchant.category)}</div><h3 class="popup-title">${escapeHtml(merchant.name)}</h3><p class="popup-address">${escapeHtml(merchant.address)}</p>${locationNote}`, { className: "merchant-popup", offset: [0, -24] });
+    visibleMarkers.set(merchant, marker);
+    added.push(marker);
+  }
+  if (typeof state.markerLayer.addLayers === "function") state.markerLayer.addLayers(added);
+  else added.forEach((marker) => state.markerLayer.addLayer(marker));
 }
 
 function locateUser({ initial = false } = {}) {
@@ -265,7 +351,9 @@ function openSearchSheet() {
   [$(".search-tabs"), $(".search-form"), $(".filter-row")].forEach((element) => mount.appendChild(element));
   sheet.classList.add("open");
   sheet.setAttribute("aria-hidden", "false");
+  scheduleMapSize(true);
   setTimeout(() => $("#searchInput").focus(), 100);
+  setTimeout(() => scheduleMapSize(true), 350);
   sheet.dataset.originalPanel = panel.className;
 }
 
@@ -275,6 +363,8 @@ function closeSearchSheet() {
   const sheet = $("#mobileSheet");
   sheet.classList.remove("open");
   sheet.setAttribute("aria-hidden", "true");
+  scheduleMapSize(true);
+  setTimeout(() => scheduleMapSize(true), 350);
 }
 
 function openSelectSheet(type) {
@@ -361,6 +451,8 @@ async function main() {
   await loadConfig();
   initMap();
   bindEvents();
+  // Let the browser paint and request the base tiles before parsing merchant data.
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 0))));
   await fetchMerchants();
   const total = MOBILE_SAMPLE_MODE
     ? state.merchants.length
