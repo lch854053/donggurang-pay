@@ -15,13 +15,27 @@ Leaflet 기반 모바일 친화 가맹점 지도와 FastAPI 기반 가맹점 관
 
 ## 바로 미리보기
 
-`preview.bat`을 실행하거나 `static/index.html`을 브라우저에서 엽니다. CDN에서 Leaflet과 VWorld 지도 타일을 불러오므로 인터넷 연결이 필요합니다. 이 모드에서는 제공된 CSV의 공개용 컬럼만 사용하며, 좌표가 없는 원본 특성상 마커는 행정동 중심을 기준으로 임시 배치됩니다.
+`preview.bat`을 실행하거나 `static/index.html`을 브라우저에서 엽니다. CDN에서 Leaflet과 VWorld 지도 타일을 불러오므로 인터넷 연결이 필요합니다. 가맹점 사업장 주소를 카카오 주소검색 API로 사전 지오코딩하여 생성한 좌표를 사용하며, 확인되지 않은 주소는 목록에만 표시하고 지도에는 배치하지 않습니다.
 
 모바일 시범 화면은 `mobile-preview.bat`을 실행하거나 `static/mobile-preview.html`을 엽니다. 390×844 화면과 운영 자료에서 분리된 테스트 가맹점 12개로 검색, 필터, 지도 이동을 확인할 수 있습니다. 서버 실행 중에는 `http://127.0.0.1:8000/mobile-preview`에서도 확인할 수 있습니다.
 
 ## 공개 지도 배포
 
-`main` 브랜치에 푸시하면 GitHub Actions가 `static/`의 공개 지도 파일을 GitHub Pages에 배포합니다. 페이지는 2026년 9월 7일 기준 가맹점 자료를 정적으로 표시하며, 정확한 주소별 좌표가 아닌 행정동 기준 임시 위치를 사용합니다. 관리자 업로드 및 사업자 상태 갱신 API는 GitHub Pages에서 실행되지 않으며, FastAPI 서버를 별도로 실행해야 사용할 수 있습니다. Pages 배포에는 API 키가 필요하지 않습니다.
+`main` 브랜치에 푸시하면 GitHub Actions가 `static/`의 공개 지도 파일을 GitHub Pages에 배포합니다. 페이지는 2026년 9월 7일 기준 가맹점 자료와 사전 생성된 주소별 좌표를 정적으로 표시합니다. 관리자 업로드 및 사업자 상태 갱신 API는 GitHub Pages에서 실행되지 않으며, FastAPI 서버를 별도로 실행해야 사용할 수 있습니다. Pages 배포와 브라우저 실행에는 카카오 API 키가 필요하지 않습니다.
+
+## 정적 지도 좌표 재생성
+
+Node.js 20 이상에서 실행합니다. `.env`는 Git에 포함되지 않으며, `.env.example`의 `KAKAO_REST_API_KEY` 변수에 발급받은 키를 설정합니다. **기존 좌표나 운영 DB 좌표는 읽어서 재사용하지 않습니다.** 원본 가맹점의 `address`만 사용하여 고유 주소별로 다시 조회합니다.
+
+```powershell
+Copy-Item .env.example .env
+# .env에서 KAKAO_REST_API_KEY=... 설정 후
+node scripts/rebuild-merchant-coordinates.mjs
+```
+
+macOS/Linux에서는 `KAKAO_REST_API_KEY=... node scripts/rebuild-merchant-coordinates.mjs`도 가능합니다. 스크립트는 4개 작업자로 카카오 주소 검색을 수행하고 일시적 장애에 재시도합니다. 성공한 좌표만 `static/merchant-data.js`에 기록하며, 실패/의심 주소의 좌표는 `null`로 저장합니다. 원본 표시 주소는 보존합니다. `data/geocode-failures.json`, `data/geocode-suspicious.json`, `data/geocode-report.json`에 검토 자료와 통계·지역별 표본·동일 좌표 상위 20개를 기록합니다. `data/`는 Git에서 제외됩니다. 공개 배포에 새로운 결과를 반영하려면 재생성된 `static/merchant-data.js`를 별도로 커밋해야 합니다.
+
+동일 건물의 여러 가맹점은 주소 좌표가 같을 수 있습니다. 의심 결과는 수동 확인 후 원본 주소를 바로잡고 다시 실행하세요. API 키는 브라우저나 생성된 JS 파일에 포함되지 않습니다.
 
 ## API 서버 실행
 

@@ -73,6 +73,7 @@ const state = {
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 const DEFAULT_CENTER = [35.1461, 126.9231];
+const hasCoordinates = (merchant) => Number.isFinite(merchant.lat) && Number.isFinite(merchant.lng);
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
@@ -221,10 +222,10 @@ function applyClientFilters(useMapCenter = false) {
     const searchable = `${merchant.name} ${merchant.address} ${merchant.category} ${merchant.locality || ""}`.toLocaleLowerCase("ko-KR");
     const queryMatches = !normalizedQuery || searchable.includes(normalizedQuery);
     const categoryMatches = state.category === "all" || merchant.group === state.category;
-    const boundsMatch = !state.filterBounds || state.filterBounds.contains([merchant.lat, merchant.lng]);
-    const distance = origin ? distanceMeters(origin, merchant) : null;
+    const boundsMatch = !state.filterBounds || !hasCoordinates(merchant) || state.filterBounds.contains([merchant.lat, merchant.lng]);
+    const distance = origin && hasCoordinates(merchant) ? distanceMeters(origin, merchant) : null;
     merchant.distance = distance;
-    const radiusMatches = state.tab !== "nearby" || !origin || distance <= state.radius;
+    const radiusMatches = state.tab !== "nearby" || !origin || distance === null || distance <= state.radius;
     return queryMatches && categoryMatches && radiusMatches && boundsMatch;
   });
   if (state.sortAscending && origin) items = items.sort((a, b) => a.distance - b.distance);
@@ -252,10 +253,14 @@ function renderMerchantList() {
     const fragment = template.content.cloneNode(true);
     fragment.querySelector("strong").textContent = merchant.name;
     fragment.querySelector("em").textContent = "동구랑페이";
-    fragment.querySelector(".category").textContent = merchant.category;
+    fragment.querySelector(".category").textContent = merchant.category + (hasCoordinates(merchant) ? "" : " · 위치 확인 필요");
     fragment.querySelector(".address").textContent = merchant.address;
-    fragment.querySelector(".distance").textContent = formatDistance(merchant.distance);
+    fragment.querySelector(".distance").textContent = hasCoordinates(merchant) ? formatDistance(merchant.distance) : "위치 확인 필요";
     fragment.querySelector("button").addEventListener("click", () => {
+      if (!hasCoordinates(merchant)) {
+        showToast("이 가맹점의 정확한 위치를 확인 중입니다.");
+        return;
+      }
       state.map.once("moveend", () => {
         renderVisibleMarkers();
         const marker = visibleMarkers.get(merchant);
@@ -281,7 +286,7 @@ function renderVisibleMarkers() {
   clearTimeout(markerUpdateTimer);
   if (!state.map || !state.markerLayer) return;
   const bounds = state.map.getBounds().pad(0.2);
-  const inView = state.filtered.filter((merchant) => bounds.contains([merchant.lat, merchant.lng]));
+  const inView = state.filtered.filter((merchant) => hasCoordinates(merchant) && bounds.contains([merchant.lat, merchant.lng]));
   const wanted = new Set(inView);
   const removed = [];
   for (const [merchant, marker] of visibleMarkers) {
@@ -299,7 +304,7 @@ function renderVisibleMarkers() {
     const marker = L.marker([merchant.lat, merchant.lng], {
       icon: L.divIcon({ className: "merchant-marker", html: "<span>동</span>", iconSize: [34, 34], iconAnchor: [17, 34] })
     });
-    const locationNote = merchant.approximate ? '<p class="popup-note">행정동 기준 임시 위치 · 주소를 확인해 주세요</p>' : "";
+    const locationNote = merchant.approximate ? '<p class="popup-note">위치를 확인해 주세요</p>' : "";
     marker.bindPopup(`<div class="popup-category">${escapeHtml(merchant.category)}</div><h3 class="popup-title">${escapeHtml(merchant.name)}</h3><p class="popup-address">${escapeHtml(merchant.address)}</p>${locationNote}`, { className: "merchant-popup", offset: [0, -24] });
     visibleMarkers.set(merchant, marker);
     added.push(marker);
