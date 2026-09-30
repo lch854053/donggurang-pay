@@ -36,7 +36,7 @@ KNOWN_SOURCE_COLUMNS = {
     "지역가맹점 등록여부", "대표자명", "휴대전화번호", "사업장주소", "등록일자",
     "등록부점코드", "등록텔러번호", "해지일자", "해지부점코드", "해지직원번호",
     "가맹점우편번호", "우편주소", "가맹점상세주소", "가맹점업종명",
-    "가맹점신규일자", "체크카드가맹점수수료율",
+    "가맹점신규일자", "체크카드가맹점수수료율", "사업자 상태", "폐업일",
 }
 PII_PATTERNS = {
     "주민등록번호": re.compile(r"(?<!\d)(?:\d{6})[-\s]?[1-4]\d{6}(?!\d)"),
@@ -163,7 +163,10 @@ def validate_headers(headers: list[str]) -> tuple[list[int], dict[str, int]]:
         index for index, header in enumerate(headers)
         if header and header not in DISCARDED_PII_COLUMNS
     ]
-    return safe_scan_indexes, {column: headers.index(column) for column in IMPORT_COLUMNS}
+    indexes = {column: headers.index(column) for column in IMPORT_COLUMNS}
+    if "사업자 상태" in headers:
+        indexes["사업자 상태"] = headers.index("사업자 상태")
+    return safe_scan_indexes, indexes
 
 
 def parse_values(
@@ -175,14 +178,16 @@ def parse_values(
     merchant_numbers: set[str],
 ) -> dict[str, str] | None:
     item = {column: values[index] if index < len(values) else "" for column, index in import_indexes.items()}
-    if not any(item.values()):
+    if not any(item.get(column) for column in IMPORT_COLUMNS):
         return None
     for index in safe_scan_indexes:
         value = values[index] if index < len(values) else ""
         for pii_name, pattern in PII_PATTERNS.items():
             if pattern.search(value):
                 raise ValueError(f"{row_number}행 {headers[index]}에서 {pii_name} 패턴이 탐지되었습니다.")
-    empty_required = [column for column, value in item.items() if not value]
+    if "폐업" in item.get("사업자 상태", ""):
+        return None
+    empty_required = [column for column in IMPORT_COLUMNS if not item[column]]
     if empty_required:
         raise ValueError(f"{row_number}행 필수값이 비어 있습니다: {', '.join(empty_required)}")
     item["사업자번호"] = re.sub(r"\D", "", item["사업자번호"])
@@ -229,7 +234,8 @@ def parse_excel(content: bytes) -> list[dict[str, str]]:
 
         for row_number, cells in enumerate(rows, start=2):
             values = [normalize_text(cell.value) for cell in cells]
-            if not any(values):
+            if not any(values[import_indexes[column]] if import_indexes[column] < len(values) else ""
+                       for column in IMPORT_COLUMNS):
                 continue
             for index in safe_scan_indexes:
                 if index >= len(cells):
@@ -353,7 +359,8 @@ def replace_merchants(rows: list[dict[str, Any]], filename: str) -> None:
                 (
                     row["사업자번호"], row["가맹점번호"], row["가맹점명"],
                     row["사업장주소"], row["가맹점업종명"], row["lat"], row["lng"],
-                    *(previous_status.get(row["사업자번호"], (None, None))), now,
+                     *((row["사업자 상태"], now) if row.get("사업자 상태") else
+                       previous_status.get(row["사업자번호"], (None, None))), now,
                 )
                 for row in rows
             ],
@@ -569,7 +576,9 @@ async def list_merchants(
 @app.get("/api/categories")
 async def categories() -> dict[str, list[str]]:
     with db_connect() as connection:
-        values = [row[0] for row in connection.execute("SELECT DISTINCT category FROM merchants ORDER BY category")]
+        values = [row[0] for row in connection.execute(
+            "SELECT DISTINCT category FROM merchants WHERE COALESCE(business_status, '') NOT LIKE '%폐업%' ORDER BY category"
+        )]
     return {"items": values}
 
 

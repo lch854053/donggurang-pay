@@ -15,7 +15,7 @@ test('creates only viewport markers and reuses them on pan and filter changes', 
   });
   vm.runInContext(fs.readFileSync(path.join(root, 'merchant-data.js'), 'utf8'), context);
   const all = context.window.DONGGURANG_MERCHANTS;
-  assert.equal(all.length, 4038);
+  assert.equal(all.length, 3803);
 
   let created = 0;
   context.L = {
@@ -39,7 +39,7 @@ test('creates only viewport markers and reuses them on pan and filter changes', 
   context.__bounds = center;
   vm.runInContext('state.map = { getBounds: () => __bounds }; state.markerLayer = __cluster; state.filtered = __all; renderVisibleMarkers()', context);
   const first = layers.size;
-  assert.ok(first > 0 && first < 4038, `initial viewport: ${first}`);
+  assert.ok(first > 0 && first < all.length, `initial viewport: ${first}`);
   assert.equal(created, first);
 
   context.__bounds = east;
@@ -54,4 +54,22 @@ test('creates only viewport markers and reuses them on pan and filter changes', 
   context.__subset = all.filter((m) => m.category === '일반한식');
   vm.runInContext('state.filtered = __subset; renderVisibleMarkers()', context);
   assert.equal(layers.size, context.__subset.filter((m) => east.contains([m.lat, m.lng])).length);
+});
+
+test('shows modern category names for both static and API merchants', () => {
+  const context = vm.createContext({
+    window: { location: { search: '' } }, URLSearchParams,
+    document: { querySelector: () => null }, clearTimeout, setTimeout
+  });
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'static', 'app.js'), 'utf8').replace(/main\(\);\s*$/, ''), context);
+  context.__items = [
+    { name: '동네분식', category: '스넥' },
+    { name: '푸른마트', category: '슈퍼 마켓' },
+    { name: '동네악기', category: '악 기 점' },
+    { name: '메가커피', category: '서양음식' },
+    { name: '폐업상점', category: '편 의 점', business_status: '폐업자' }
+  ];
+  const result = vm.runInContext('prepareMerchants(__items)', context);
+  assert.deepEqual(Array.from(result, (item) => item.category), ['분식', '마트', '악기', '카페']);
+  assert.deepEqual(Array.from(result, (item) => item.group), ['음식점·카페', '식품·마트', '교육·문화', '음식점·카페']);
 });
