@@ -73,3 +73,24 @@ test('shows modern category names for both static and API merchants', () => {
   assert.deepEqual(Array.from(result, (item) => item.category), ['분식', '마트', '악기', '카페']);
   assert.deepEqual(Array.from(result, (item) => item.group), ['음식점·카페', '식품·마트', '교육·문화', '음식점·카페']);
 });
+
+test('focuses a selected category when its merchants are outside the map viewport', () => {
+  const context = vm.createContext({
+    window: { location: { search: '' } }, URLSearchParams,
+    document: { querySelector: () => null }, clearTimeout, setTimeout
+  });
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'static', 'merchant-data.js'), 'utf8'), context);
+  context.L = { latLngBounds: (points) => points };
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'static', 'app.js'), 'utf8').replace(/main\(\);\s*$/, ''), context);
+  const restaurants = vm.runInContext('prepareMerchants(window.DONGGURANG_MERCHANTS).filter((m) => m.group === "음식점·카페")', context);
+  assert.ok(restaurants.length > 1000);
+  const moves = [];
+  context.__moves = moves;
+  context.__bounds = { contains: () => false };
+  vm.runInContext('state.filtered = prepareMerchants(window.DONGGURANG_MERCHANTS).filter((m) => m.group === "음식점·카페"); state.map = { getBounds: () => __bounds, fitBounds: (points) => __moves.push(points) }; showFilteredMerchantsOnMap()', context);
+  assert.equal(moves.length, 1);
+  assert.equal(moves[0].length, restaurants.filter((item) => item.lat != null).length);
+  context.__bounds = { contains: () => true };
+  vm.runInContext('showFilteredMerchantsOnMap()', context);
+  assert.equal(moves.length, 1, 'do not move a map that already shows matching merchants');
+});
