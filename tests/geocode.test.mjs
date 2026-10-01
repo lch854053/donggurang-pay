@@ -28,7 +28,8 @@ test('published data has no locality-preview coordinates', () => {
   vm.runInNewContext(fs.readFileSync(new URL('../static/merchant-data.js', import.meta.url), 'utf8'), context);
   const items = context.window.DONGGURANG_MERCHANTS;
   assert.equal(items.length, 3803);
-  assert.equal(items.filter((item) => item.approximate === false && Number.isFinite(item.lat) && Number.isFinite(item.lng)).length, 3767);
-  assert.equal(items.filter((item) => item.approximate === true && item.lat === null && item.lng === null).length, 36);
+  assert.equal(items.filter((item) => item.approximate === false && Number.isFinite(item.lat) && Number.isFinite(item.lng)).length, 3797);
+  assert.deepEqual(Array.from(items.filter((item) => item.approximate === true && item.lat === null && item.lng === null), (item) => item.id),
+    [400, 976, 3401, 3778, 3830, 3842]);
   assert.equal(context.window.DONGGURANG_DATA_META.coordinates, 'address-geocoded');
 });
