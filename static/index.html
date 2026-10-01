@@ -21,12 +21,12 @@
       </a>
       <div class="header-actions">
         <a class="admin-link" href="./admin.html">관리자</a>
-        <button class="icon-button" id="helpButton" type="button" aria-label="이용 안내">?</button>
       </div>
     </header>
 
     <main class="workspace">
       <section class="search-panel" aria-label="가맹점 검색">
+        <button class="panel-handle" id="panelHandle" type="button" aria-label="가맹점 목록 접기" aria-expanded="true"><span></span></button>
         <div class="brand-card" aria-label="동구랑페이 브랜드 안내">
           <span class="spark spark-one" aria-hidden="true">✦</span>
           <span class="spark spark-two" aria-hidden="true">✦</span>
@@ -83,31 +83,22 @@
       <section class="map-area" aria-label="가맹점 지도">
         <div id="map"></div>
         <div class="map-topbar">
-          <button class="mobile-search-trigger" id="mobileSearchTrigger" type="button">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg>
-            <span id="mobileSearchText">가맹점명 또는 주소 검색</span>
-          </button>
-          <button class="location-button" id="locationButton" type="button" aria-label="내 위치로 이동" title="내 위치로 이동">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><circle cx="12" cy="12" r="8"></circle><path d="M12 2V4M12 20v2M2 12h2M20 12h2"></path></svg>
+          <form class="mobile-search-form" id="mobileSearchForm" role="search">
+            <input id="mobileSearchInput" type="search" autocomplete="off" placeholder="가맹점명 · 주소 검색" aria-label="가맹점명 또는 주소">
+            <button type="submit" aria-label="검색"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg></button>
+          </form>
+          <button class="mobile-category-button" id="mobileCategoryButton" type="button" aria-label="업종 선택" title="업종 선택">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>
+            <span>업종</span>
           </button>
         </div>
-        <button class="research-button" id="researchButton" type="button">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 5v6h-6"></path></svg>
-          현 지도에서 재검색
+        <button class="location-button" id="locationButton" type="button" aria-label="내 위치로 이동" title="내 위치로 이동">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><circle cx="12" cy="12" r="8"></circle><path d="M12 2V4M12 20v2M2 12h2M20 12h2"></path></svg>
         </button>
         <div class="map-notice" id="mapNotice"><strong>2026.09.07 기준</strong><span>사업장 주소 기준 위치 · 확인되지 않은 주소는 지도에서 제외됩니다.</span></div>
         <div class="map-legend"><span></span> 동구랑페이 가맹점</div>
       </section>
     </main>
-  </div>
-
-  <div class="mobile-sheet" id="mobileSheet" aria-hidden="true">
-    <button class="sheet-backdrop" type="button" data-close-sheet aria-label="닫기"></button>
-    <div class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
-      <div class="sheet-handle"></div>
-      <div class="sheet-header"><h2 id="sheetTitle">가맹점 찾기</h2><button type="button" data-close-sheet aria-label="닫기">×</button></div>
-      <div id="mobileSearchMount"></div>
-    </div>
   </div>
 
   <div class="select-sheet" id="selectSheet" aria-hidden="true">
