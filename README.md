@@ -24,6 +24,10 @@ Leaflet 기반 모바일 친화 가맹점 지도와 FastAPI 기반 가맹점 관
 
 ## 공개 지도 배포
 
+- 저장소: https://github.com/lch854053/donggurang-pay
+- 공개 지도: https://lch854053.github.io/donggurang-pay/
+- 모바일 시범 화면: https://lch854053.github.io/donggurang-pay/mobile-preview.html
+
 `main` 브랜치에 푸시하면 GitHub Actions가 `static/`의 공개 지도 파일을 GitHub Pages에 배포합니다. 페이지는 2026년 9월 7일 기준 가맹점 자료와 사전 생성된 주소별 좌표를 정적으로 표시합니다. 관리자 업로드 및 사업자 상태 갱신 API는 GitHub Pages에서 실행되지 않으며, FastAPI 서버를 별도로 실행해야 사용할 수 있습니다. Pages 배포와 브라우저 실행에는 카카오 API 키가 필요하지 않습니다.
 
 ## 정적 지도 좌표 재생성
