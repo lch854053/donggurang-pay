@@ -15,6 +15,19 @@ const SAMPLE_MERCHANTS = [
 
 const MOBILE_SAMPLE_MODE = new URLSearchParams(window.location.search).has("mobile-test");
 const CATEGORY_GROUP_ORDER = ["음식점·카페", "식품·마트", "패션·뷰티", "의료·건강", "교육·문화", "생활·주거", "스포츠·여가", "기타"];
+const CATEGORY_MARKER_ICONS = {
+  "음식점·카페": '<path d="M4 3v7a3 3 0 0 0 6 0V3M7 3v18M17 3c-2 3-2 6 0 8h2V3h-2Zm2 8v10"/>',
+  "식품·마트": '<path d="M3 9h18l-2 11H5L3 9Zm4 0 5-6 5 6M9 13v3m6-3v3"/>',
+  "패션·뷰티": '<path d="M10 5a2 2 0 1 1 4 0c0 1-2 2-2 4v1l9 6v2H3v-2l9-6"/>',
+  "의료·건강": '<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6V3Z"/>',
+  "교육·문화": '<path d="M12 6c-2-2-5-2-9-2v14c4 0 7 0 9 2m0-14c2-2 5-2 9-2v14c-4 0-7 0-9 2V6Z"/>',
+  "생활·주거": '<path d="m3 10 9-7 9 7v10H3V10Zm7 10v-7h4v7"/>',
+  "스포츠·여가": '<circle cx="12" cy="12" r="9"/><path d="M5 6c4 1 7 5 7 12m7-12c-4 1-7 5-7 12M3 12h18"/>',
+  "기타": '<path d="M3 7h18l-2-4H5L3 7Zm1 0v14h16V7M7 12h10m-7 9v-6h4v6"/>'
+};
+function markerIcon(group) {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${CATEGORY_MARKER_ICONS[group] || CATEGORY_MARKER_ICONS["기타"]}</svg>`;
+}
 // Card-company industry codes are retained in the source data; show familiar labels instead.
 const CATEGORY_LABELS = {
   일반한식: "한식", 서양음식: "양식·카페", 일식회집: "일식·초밥", 중국음식: "중식",
@@ -356,7 +369,7 @@ function renderVisibleMarkers() {
   for (const merchant of inView) {
     if (visibleMarkers.has(merchant)) continue;
     const marker = L.marker([merchant.lat, merchant.lng], {
-      icon: L.divIcon({ className: "merchant-marker", html: "<span>동</span>", iconSize: [34, 34], iconAnchor: [17, 34] })
+      icon: L.divIcon({ className: "merchant-marker", html: markerIcon(merchant.group), iconSize: [34, 34], iconAnchor: [17, 34] })
     });
     const locationNote = merchant.approximate ? '<p class="popup-note">위치를 확인해 주세요</p>' : "";
     marker.bindPopup(`<div class="popup-category">${escapeHtml(merchant.category)}</div><h3 class="popup-title">${escapeHtml(merchant.name)}</h3><p class="popup-address">${escapeHtml(merchant.address)}</p>${locationNote}`, { className: "merchant-popup", offset: [0, -24] });
@@ -386,7 +399,6 @@ function locateUser({ initial = false } = {}) {
     state.tab = "nearby";
     setActiveTab("nearby");
     fetchMerchants();
-    showToast("현재 위치 주변 가맹점을 찾았습니다.");
   }, (error) => {
     button.classList.remove("loading");
     if (!initial) showToast(error.code === 1 ? "위치 권한을 허용하면 내 주변을 찾을 수 있어요." : "현재 위치를 확인하지 못했습니다.");
