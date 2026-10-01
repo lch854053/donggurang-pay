@@ -74,6 +74,7 @@ let markerUpdateTimer;
 let sizeFrame;
 let lastMapSize = "";
 let forceSizeUpdate = false;
+let merchantRequestVersion = 0;
 
 function loadStaticMerchants() {
   if (MOBILE_SAMPLE_MODE) return Promise.resolve(SAMPLE_MERCHANTS);
@@ -234,8 +235,13 @@ function scheduleVisibleMarkers() {
 }
 
 async function fetchMerchants() {
+  const requestVersion = ++merchantRequestVersion;
   if (state.staticMode) {
-    if (!state.merchants.length) state.merchants = prepareMerchants(await loadStaticMerchants());
+    if (!state.merchants.length) {
+      const loaded = await loadStaticMerchants();
+      if (requestVersion !== merchantRequestVersion) return;
+      state.merchants = prepareMerchants(loaded);
+    }
     applyClientFilters();
     return;
   }
@@ -250,11 +256,15 @@ async function fetchMerchants() {
     const response = await fetch(`/api/merchants?${params}`);
     if (!response.ok) throw new Error("Merchant API error");
     const payload = await response.json();
+    if (requestVersion !== merchantRequestVersion) return;
     state.merchants = prepareMerchants(payload.items);
     applyClientFilters();
   } catch {
+    if (requestVersion !== merchantRequestVersion) return;
     state.staticMode = true;
-    state.merchants = prepareMerchants(await loadStaticMerchants());
+    const loaded = await loadStaticMerchants();
+    if (requestVersion !== merchantRequestVersion) return;
+    state.merchants = prepareMerchants(loaded);
     showToast("제공된 가맹점 자료로 미리보기 중입니다.");
     applyClientFilters();
   }
@@ -399,6 +409,14 @@ function setPanelCollapsed(collapsed) {
   $("#panelHandle").setAttribute("aria-label", collapsed ? "가맹점 목록 펼치기" : "가맹점 목록 접기");
 }
 
+function showFilteredMerchantsOnMap() {
+  const located = state.filtered.filter(hasCoordinates);
+  if (!located.length || located.some((item) => state.map.getBounds().contains([item.lat, item.lng]))) return;
+  state.map.fitBounds(L.latLngBounds(located.map((item) => [item.lat, item.lng])), {
+    padding: [32, 32], maxZoom: 15
+  });
+}
+
 function bindPanelGestures() {
   const panel = $(".search-panel");
   let start = null;
@@ -445,8 +463,11 @@ function openSelectSheet(type) {
       $("#selectSheet").classList.remove("open");
       $("#selectSheet").setAttribute("aria-hidden", "true");
       if (isCategory && window.matchMedia("(max-width: 760px)").matches) {
+        state.query = "";
+        $("#searchInput").value = "";
+        $("#mobileSearchInput").value = "";
         setActiveTab("search");
-        fetchMerchants();
+        fetchMerchants().then(showFilteredMerchantsOnMap);
       } else applyClientFilters();
     });
     container.appendChild(button);
