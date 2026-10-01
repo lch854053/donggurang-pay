@@ -123,8 +123,7 @@ const state = {
   tab: "nearby",
   userLocation: null,
   sortAscending: true,
-  staticMode: false,
-  filterBounds: null
+  staticMode: false
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -194,7 +193,6 @@ function initMap() {
     : L.layerGroup();
   state.map.addLayer(state.markerLayer);
   state.map.on("moveend", () => {
-    $("#researchButton").classList.add("ready");
     scheduleVisibleMarkers();
   });
   // The mobile viewport and the map container can settle after Leaflet's first measurement.
@@ -235,55 +233,44 @@ function scheduleVisibleMarkers() {
   markerUpdateTimer = setTimeout(renderVisibleMarkers, 100);
 }
 
-async function fetchMerchants({ useMapCenter = false } = {}) {
+async function fetchMerchants() {
   if (state.staticMode) {
     if (!state.merchants.length) state.merchants = prepareMerchants(await loadStaticMerchants());
-    state.filterBounds = useMapCenter ? state.map.getBounds() : null;
     applyClientFilters();
     return;
   }
   const params = new URLSearchParams({ limit: "5000" });
   if (state.query) params.set("q", state.query);
-  const point = useMapCenter ? state.map.getCenter() : state.userLocation;
-  if (point && state.tab === "nearby") {
-    params.set("lat", point.lat);
-    params.set("lng", point.lng);
+  if (state.userLocation && state.tab === "nearby") {
+    params.set("lat", state.userLocation.lat);
+    params.set("lng", state.userLocation.lng);
     params.set("radius", state.radius);
-  } else if (useMapCenter) {
-    const bounds = state.map.getBounds();
-    params.set("south", bounds.getSouth());
-    params.set("west", bounds.getWest());
-    params.set("north", bounds.getNorth());
-    params.set("east", bounds.getEast());
   }
   try {
     const response = await fetch(`/api/merchants?${params}`);
     if (!response.ok) throw new Error("Merchant API error");
     const payload = await response.json();
     state.merchants = prepareMerchants(payload.items);
-    state.filterBounds = null;
-    applyClientFilters(false);
+    applyClientFilters();
   } catch {
     state.staticMode = true;
     state.merchants = prepareMerchants(await loadStaticMerchants());
-    state.filterBounds = useMapCenter ? state.map.getBounds() : null;
     showToast("제공된 가맹점 자료로 미리보기 중입니다.");
     applyClientFilters();
   }
 }
 
-function applyClientFilters(useMapCenter = false) {
+function applyClientFilters() {
   const normalizedQuery = state.query.trim().toLocaleLowerCase("ko-KR");
-  const origin = useMapCenter ? state.map.getCenter() : state.userLocation;
+  const origin = state.userLocation;
   let items = state.merchants.filter((merchant) => {
     const searchable = `${merchant.name} ${merchant.address} ${merchant.category} ${merchant.locality || ""}`.toLocaleLowerCase("ko-KR");
     const queryMatches = !normalizedQuery || searchable.includes(normalizedQuery);
     const categoryMatches = state.category === "all" || merchant.group === state.category;
-    const boundsMatch = !state.filterBounds || !hasCoordinates(merchant) || state.filterBounds.contains([merchant.lat, merchant.lng]);
     const distance = origin && hasCoordinates(merchant) ? distanceMeters(origin, merchant) : null;
     merchant.distance = distance;
     const radiusMatches = state.tab !== "nearby" || !origin || distance === null || distance <= state.radius;
-    return queryMatches && categoryMatches && radiusMatches && boundsMatch;
+    return queryMatches && categoryMatches && radiusMatches;
   });
   if (state.sortAscending && origin) items = items.sort((a, b) => a.distance - b.distance);
   if (!state.sortAscending) items = items.sort((a, b) => a.name.localeCompare(b.name, "ko-KR"));
@@ -406,33 +393,34 @@ function setActiveTab(tab) {
   if (tab === "nearby" && !state.userLocation) locateUser();
 }
 
-function openSearchSheet() {
-  const sheet = $("#mobileSheet");
-  const mount = $("#mobileSearchMount");
-  const panel = $(".search-panel");
-  [$(".search-tabs"), $(".search-form"), $(".filter-row")].forEach((element) => mount.appendChild(element));
-  sheet.classList.add("open");
-  sheet.setAttribute("aria-hidden", "false");
-  scheduleMapSize(true);
-  setTimeout(() => $("#searchInput").focus(), 100);
-  setTimeout(() => scheduleMapSize(true), 350);
-  sheet.dataset.originalPanel = panel.className;
+function setPanelCollapsed(collapsed) {
+  $(".search-panel").classList.toggle("collapsed", collapsed);
+  $("#panelHandle").setAttribute("aria-expanded", String(!collapsed));
+  $("#panelHandle").setAttribute("aria-label", collapsed ? "가맹점 목록 펼치기" : "가맹점 목록 접기");
 }
 
-function closeSearchSheet() {
+function bindPanelGestures() {
   const panel = $(".search-panel");
-  [$(".search-tabs"), $(".search-form"), $(".filter-row")].forEach((element) => panel.insertBefore(element, $(".panel-status")));
-  const sheet = $("#mobileSheet");
-  sheet.classList.remove("open");
-  sheet.setAttribute("aria-hidden", "true");
-  scheduleMapSize(true);
-  setTimeout(() => scheduleMapSize(true), 350);
+  let start = null;
+  panel.addEventListener("touchstart", (event) => {
+    start = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+  }, { passive: true });
+  panel.addEventListener("touchend", (event) => {
+    if (!start || !window.matchMedia("(max-width: 760px)").matches) return;
+    const dx = event.changedTouches[0].clientX - start.x;
+    const dy = event.changedTouches[0].clientY - start.y;
+    start = null;
+    if (Math.abs(dy) < 45 || Math.abs(dy) < Math.abs(dx) * 1.2) return;
+    setPanelCollapsed(dy > 0);
+    if (event.target.closest("#panelHandle")) event.preventDefault();
+  });
+  $("#panelHandle").addEventListener("click", () => setPanelCollapsed(!panel.classList.contains("collapsed")));
 }
 
 function openSelectSheet(type) {
   const isCategory = type === "category";
   const options = isCategory
-    ? ["all", ...CATEGORY_GROUP_ORDER.filter((group) => state.merchants.some((item) => item.group === group))].map((value) => ({ value, label: value === "all" ? "전체 업종" : value }))
+    ? ["all", ...CATEGORY_GROUP_ORDER].map((value) => ({ value, label: value === "all" ? "전체 업종" : value }))
     : [{ value: 500, label: "500m 이내" }, { value: 1000, label: "1km 이내" }, { value: 3000, label: "3km 이내" }, { value: 5000, label: "5km 이내" }];
   $("#selectTitle").textContent = isCategory ? "업종 선택" : "검색 거리 선택";
   const container = $("#selectOptions");
@@ -448,12 +436,18 @@ function openSelectSheet(type) {
       if (isCategory) {
         state.category = option.value;
         $("#categoryLabel").textContent = option.label;
+        $("#mobileCategoryButton").classList.toggle("active", option.value !== "all");
+        $("#mobileCategoryButton").setAttribute("aria-label", `업종 선택: ${option.label}`);
       } else {
         state.radius = Number(option.value);
         $("#radiusLabel").textContent = option.label;
       }
       $("#selectSheet").classList.remove("open");
-      applyClientFilters();
+      $("#selectSheet").setAttribute("aria-hidden", "true");
+      if (isCategory && window.matchMedia("(max-width: 760px)").matches) {
+        setActiveTab("search");
+        fetchMerchants();
+      } else applyClientFilters();
     });
     container.appendChild(button);
   });
@@ -476,35 +470,38 @@ async function searchAddress(query) {
 }
 
 function bindEvents() {
+  bindPanelGestures();
   $$(".tab").forEach((button) => button.addEventListener("click", () => setActiveTab(button.dataset.tab)));
-  $("#searchForm").addEventListener("submit", async (event) => {
+  const submitSearch = async (event) => {
     event.preventDefault();
-    state.query = $("#searchInput").value.trim();
-    state.filterBounds = null;
-    $("#mobileSearchText").textContent = state.query || "가맹점명 또는 주소 검색";
+    state.query = (event.currentTarget.id === "mobileSearchForm" ? $("#mobileSearchInput") : $("#searchInput")).value.trim();
+    $("#searchInput").value = state.query;
+    $("#mobileSearchInput").value = state.query;
+    setActiveTab("search");
     if (state.query) {
-      setActiveTab("search");
       await searchAddress(state.query);
     }
     await fetchMerchants();
-    closeSearchSheet();
-  });
+    $("#mobileSearchInput").blur();
+  };
+  $("#searchForm").addEventListener("submit", submitSearch);
+  $("#mobileSearchForm").addEventListener("submit", submitSearch);
   $$(".filter-chip").forEach((button) => button.addEventListener("click", () => openSelectSheet(button.dataset.filter)));
+  $("#mobileCategoryButton").addEventListener("click", () => openSelectSheet("category"));
   $("#locationButton").addEventListener("click", () => locateUser());
-  $("#researchButton").addEventListener("click", () => fetchMerchants({ useMapCenter: true }));
-  $("#mobileSearchTrigger").addEventListener("click", openSearchSheet);
-  $$('[data-close-sheet]').forEach((button) => button.addEventListener("click", closeSearchSheet));
-  $$('[data-close-select]').forEach((button) => button.addEventListener("click", () => $("#selectSheet").classList.remove("open")));
+  $$('[data-close-select]').forEach((button) => button.addEventListener("click", () => {
+    $("#selectSheet").classList.remove("open");
+    $("#selectSheet").setAttribute("aria-hidden", "true");
+  }));
   $("#sortButton").addEventListener("click", () => {
     state.sortAscending = !state.sortAscending;
     $("#sortButton").firstChild.textContent = state.sortAscending ? "가까운 순 " : "가맹점명 순 ";
     applyClientFilters();
   });
-  $("#helpButton").addEventListener("click", () => showToast("가맹점을 선택하면 상세 위치를 확인할 수 있어요."));
   window.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
-      closeSearchSheet();
       $("#selectSheet").classList.remove("open");
+      $("#selectSheet").setAttribute("aria-hidden", "true");
     }
   });
 }
