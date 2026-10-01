@@ -319,7 +319,6 @@ function renderMerchantList() {
 
     const fragment = template.content.cloneNode(true);
     fragment.querySelector("strong").textContent = merchant.name;
-    fragment.querySelector("em").textContent = "동구랑페이";
     fragment.querySelector(".category").textContent = merchant.category + (hasCoordinates(merchant) ? "" : " · 위치 확인 필요");
     fragment.querySelector(".address").textContent = merchant.address;
     fragment.querySelector(".distance").textContent = hasCoordinates(merchant) ? formatDistance(merchant.distance) : "위치 확인 필요";
@@ -504,6 +503,11 @@ async function searchAddress(query) {
 
 function bindEvents() {
   bindPanelGestures();
+  [$(".brand-bar"), $(".search-panel")].forEach((element) => {
+    element.addEventListener("touchmove", (event) => {
+      if (window.matchMedia("(max-width: 760px)").matches && event.touches.length > 1) event.preventDefault();
+    }, { passive: false });
+  });
   $$(".tab").forEach((button) => button.addEventListener("click", () => setActiveTab(button.dataset.tab)));
   const submitSearch = async (event) => {
     event.preventDefault();
@@ -553,9 +557,7 @@ async function main() {
   if (MOBILE_SAMPLE_MODE) {
     $("#mapNotice").innerHTML = "<strong>모바일 시범자료</strong><span>테스트용 가맹점 12개입니다.</span>";
     showToast("모바일 테스트용 시범자료 12개를 불러왔습니다.");
-  } else if (state.staticMode) {
-    showToast(`${total.toLocaleString("ko-KR")}개 실제 가맹점 자료를 불러왔습니다.`);
-  } else {
+  } else if (!state.staticMode) {
     $("#mapNotice").hidden = true;
     setTimeout(() => locateUser({ initial: true }), 500);
   }

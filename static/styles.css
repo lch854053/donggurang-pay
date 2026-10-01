@@ -102,7 +102,6 @@ button { color: inherit; }
 .merchant-copy { min-width: 0; }
 .merchant-head { display: flex; align-items: center; gap: 7px; }
 .merchant-head strong { overflow: hidden; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
-.merchant-head em { flex: none; padding: 3px 6px; border-radius: 5px; background: #fff0eb; color: #c84b31; font-size: 9px; font-style: normal; font-weight: 800; }
 .category, .address { display: block; overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .category { margin-top: 5px; color: var(--purple); font-weight: 700; }
 .address { margin-top: 3px; }
@@ -157,13 +156,13 @@ button { color: inherit; }
 @keyframes sheet-up { from { transform: translateY(25%); opacity: .5; } }
 
 @media (max-width: 760px) {
-  .brand-bar { height: 58px; padding: 0 16px; }
+  .brand-bar { height: 58px; padding: 0 16px; touch-action: none; }
   .brand-logo { width: 38px; height: 38px; }
   .brand strong { font-size: 16px; }
   .brand small { display: none; }
   .admin-link { display: none; }
   .workspace { display: block; position: relative; }
-  .search-panel { position: absolute; z-index: 650; right: 0; bottom: 0; left: 0; height: calc(178px + env(safe-area-inset-bottom)); padding: 0 16px calc(10px + env(safe-area-inset-bottom)); border-radius: 24px 24px 0 0; box-shadow: 0 -10px 35px rgba(22,52,45,.14); transition: height .25s ease; }
+  .search-panel { position: absolute; z-index: 650; right: 0; bottom: 0; left: 0; height: calc(178px + env(safe-area-inset-bottom)); padding: 0 16px calc(10px + env(safe-area-inset-bottom)); border-radius: 24px 24px 0 0; box-shadow: 0 -10px 35px rgba(22,52,45,.14); touch-action: pan-x; transition: height .25s ease; }
   .search-panel.collapsed { height: calc(34px + env(safe-area-inset-bottom)); }
   .panel-handle { display: grid; flex: 0 0 22px; place-items: center; width: 100%; padding: 0; border: 0; background: transparent; cursor: pointer; touch-action: none; }
   .panel-handle span { width: 38px; height: 4px; border-radius: 3px; background: #b9c5c0; }
