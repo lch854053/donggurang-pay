@@ -127,7 +127,7 @@ button { color: inherit; }
 .leaflet-control-zoom { border: 0 !important; box-shadow: var(--shadow) !important; }
 .leaflet-control-zoom a { border: 0 !important; color: var(--accent) !important; }
 .merchant-marker { display: grid; place-items: center; width: 34px !important; height: 34px !important; border: 3px solid white; border-radius: 15px 15px 15px 4px; background: linear-gradient(145deg, #3296d3, #0874be); box-shadow: 0 5px 12px rgba(4,79,129,.28); color: white; font-size: 14px; font-weight: 850; transform: rotate(-5deg); }
-.merchant-marker span { transform: rotate(5deg); }
+.merchant-marker svg { width: 20px; height: 20px; transform: rotate(5deg); }
 .user-marker { width: 18px !important; height: 18px !important; border: 4px solid white; border-radius: 50%; background: #2f7ee6; box-shadow: 0 0 0 9px rgba(47,126,230,.2); }
 .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large { background: rgba(8,116,190,.24) !important; }
 .marker-cluster div { background: var(--accent) !important; color: white !important; font-family: inherit !important; font-weight: 800; }

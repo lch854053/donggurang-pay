@@ -94,3 +94,28 @@ test('focuses a selected category when its merchants are outside the map viewpor
   vm.runInContext('showFilteredMerchantsOnMap()', context);
   assert.equal(moves.length, 1, 'do not move a map that already shows matching merchants');
 });
+
+test('map merchants use distinct industry icons on the existing marker background', () => {
+  const context = vm.createContext({
+    window: { location: { search: '' } }, URLSearchParams,
+    document: { querySelector: () => null }, clearTimeout, setTimeout
+  });
+  const icons = [];
+  context.L = {
+    marker: (_, options) => { icons.push(options.icon); return { bindPopup() { return this; } }; },
+    divIcon: (options) => options
+  };
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'static', 'app.js'), 'utf8').replace(/main\(\);\s*$/, ''), context);
+  context.__items = [
+    { name: '분식집', category: '스넥', lat: 35.15, lng: 126.92 },
+    { name: '슈퍼', category: '슈퍼 마켓', lat: 35.15, lng: 126.92 },
+    { name: '약국', category: '약국', lat: 35.15, lng: 126.92 }
+  ];
+  vm.runInContext(`state.filtered = prepareMerchants(__items);
+    state.map = { getBounds: () => ({ pad: () => ({ contains: () => true }) }) };
+    state.markerLayer = { addLayers() {}, removeLayers() {} };
+    renderVisibleMarkers()`, context);
+  assert.equal(icons.length, 3);
+  assert.ok(icons.every((icon) => icon.className === 'merchant-marker' && icon.html.startsWith('<svg')));
+  assert.equal(new Set(icons.map((icon) => icon.html)).size, 3);
+});
