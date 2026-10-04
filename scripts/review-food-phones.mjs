@@ -101,9 +101,12 @@ async function main() {
   for (const filename of ['merchant-data.js', 'merchant-phones.js']) {
     vm.runInNewContext(fs.readFileSync(path.join(root, 'static', filename), 'utf8'), context);
   }
+  const reviewedPath = path.join(root, 'static/merchant-reviewed-phones.js');
+  if (fs.existsSync(reviewedPath)) vm.runInNewContext(fs.readFileSync(reviewedPath, 'utf8'), context);
+  const phones = { ...context.window.DONGGURANG_PHONES, ...context.window.DONGGURANG_REVIEWED_PHONES };
   const previousReport = JSON.parse(fs.readFileSync(path.join(root, 'reports/merchant-phones.json'), 'utf8'));
   const previousReasons = Object.fromEntries(previousReport.results.map((item) => [item.id, item.reason]));
-  const review = reviewFoodPhones(context.window.DONGGURANG_MERCHANTS, context.window.DONGGURANG_PHONES, datasets, previousReasons);
+  const review = reviewFoodPhones(context.window.DONGGURANG_MERCHANTS, phones, datasets, previousReasons);
   const headers = ['가맹점ID', '가맹점명', '현재주소', '현재전화번호', '기존조폐공사제외사유', '출처API', '인허가사업장명', '인허가도로명주소',
     '후보전화번호', '영업상태', '상세영업상태', '원본최종수정일', '데이터갱신일', '관리번호', '검토결과'];
   const fields = ['id', 'name', 'address', 'existingPhone', 'previousReason', 'source', 'candidateName', 'candidateAddress', 'phone',
@@ -113,7 +116,7 @@ async function main() {
     ['existingDifferences', 'food-phone-existing-differences.csv']]) {
     fs.writeFileSync(path.join(root, 'reports', filename), csvText(headers, review[key].map((row) => fields.map((field) => row[field]))));
   }
-  const totals = { existingPhoneCount: Object.keys(context.window.DONGGURANG_PHONES).length,
+  const totals = { existingPhoneCount: Object.keys(phones).length,
     additionalMerchants: new Set(review.additions.map((row) => row.id)).size,
     candidateMerchants: new Set(review.candidates.map((row) => row.id)).size,
     existingDifferentMerchants: new Set(review.existingDifferences.map((row) => row.id)).size };
