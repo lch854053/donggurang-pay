@@ -3,37 +3,71 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>동구랑페이 관리자</title>
-  <link rel="stylesheet" href="/static/admin.css">
+  <meta name="theme-color" content="#f6f3e9">
+  <title>가맹점 데이터 관리 | 동구랑페이</title>
+  <style>
+    @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
+    :root { --ink:#17342d; --muted:#687b74; --green:#126b52; --soft:#e4f2eb; --cream:#f6f3e9; --line:#dfe6e1; --coral:#ec684b; }
+    * { box-sizing:border-box; } body { margin:0; background:var(--cream); color:var(--ink); font-family:Pretendard,"Noto Sans KR",sans-serif; }
+    button,input { font:inherit; } .wrap { width:min(860px,calc(100% - 32px)); margin:0 auto; padding:32px 0 70px; }
+    header { display:flex; align-items:center; justify-content:space-between; margin-bottom:32px; }
+    .brand { display:flex; align-items:center; gap:10px; color:inherit; font-weight:800; text-decoration:none; }
+    .brand i { display:grid; place-items:center; width:38px; height:38px; border-radius:13px 13px 13px 4px; background:var(--green); color:white; font-style:normal; }
+    .back { color:var(--muted); font-size:13px; text-decoration:none; } .intro small { color:var(--coral); font-weight:800; letter-spacing:.12em; }
+    h1 { margin:10px 0 8px; font-size:32px; letter-spacing:-.05em; } .intro p { margin:0 0 26px; color:var(--muted); line-height:1.6; }
+    .card { padding:28px; border:1px solid var(--line); border-radius:22px; background:#fffefb; box-shadow:0 14px 40px rgba(22,52,45,.08); }
+    .notice { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:25px; }
+    .notice div { padding:16px; border-radius:14px; background:#f5f8f5; font-size:12px; line-height:1.5; }
+    .notice strong { display:block; margin-bottom:5px; color:var(--green); font-size:13px; }
+    label { display:block; margin:18px 0 7px; font-size:13px; font-weight:700; }
+    input[type=password] { width:100%; height:48px; padding:0 14px; border:1px solid #cbd7d1; border-radius:12px; outline:0; }
+    input[type=password]:focus { border-color:var(--green); box-shadow:0 0 0 4px rgba(18,107,82,.1); }
+    .drop { position:relative; display:grid; place-items:center; min-height:170px; padding:22px; border:2px dashed #a9bdb4; border-radius:16px; background:#f9fbf8; text-align:center; transition:.2s; }
+    .drop.drag { border-color:var(--green); background:var(--soft); } .drop input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+    .drop-icon { display:grid; place-items:center; width:48px; height:48px; margin:0 auto 10px; border-radius:17px; background:var(--soft); color:var(--green); font-size:22px; font-weight:800; }
+    .drop strong,.drop span { display:block; } .drop span { margin-top:5px; color:var(--muted); font-size:12px; }
+    .file-name { margin:12px 0 0; color:var(--green); font-size:13px; font-weight:700; }
+    .submit { width:100%; height:52px; margin-top:20px; border:0; border-radius:13px; background:var(--green); color:white; cursor:pointer; font-weight:750; }
+    .submit:disabled { opacity:.5; cursor:wait; } .result { display:none; margin-top:18px; padding:15px; border-radius:12px; font-size:13px; line-height:1.55; white-space:pre-line; }
+    .result.show { display:block; } .result.success { background:var(--soft); color:#0a4d3b; } .result.error { background:#fff0eb; color:#a13e29; }
+    .columns { margin-top:24px; padding-top:22px; border-top:1px solid var(--line); } .columns h2 { margin:0 0 10px; font-size:15px; }
+    .tags { display:flex; flex-wrap:wrap; gap:7px; } .tag { padding:7px 9px; border-radius:8px; background:var(--soft); color:var(--green); font-size:11px; font-weight:700; }
+    @media(max-width:600px){ .wrap{padding-top:20px}.notice{grid-template-columns:1fr}.card{padding:20px}h1{font-size:27px} }
+  </style>
 </head>
 <body>
-  <header><h1>동구랑페이 관리자</h1><button id="logout" hidden>로그아웃</button></header>
-  <p id="notice" role="status">로그인 후 월별 명단을 비교하고 변경분만 승인합니다.</p>
-  <form id="login"><label>관리자 인증키<input id="key" type="password" required autocomplete="current-password"></label><button>로그인</button></form>
-  <main id="console" hidden>
-    <nav aria-label="관리 업무">
-      <button data-tab="updates">월별 명단 비교</button><button data-tab="requests">주민 수정 요청</button>
-      <button data-tab="merchants">가맹점 관리</button><button data-tab="history">변경 이력</button><button data-tab="publications">지도 배포</button>
-    </nav>
-    <section id="updates">
-      <h2>월별 가맹점 업데이트</h2>
-      <p>파일 업로드만으로 지도 정보는 바뀌지 않습니다. 신규·변경·제외 후보를 확인하고 선택 승인하세요.</p>
-      <details><summary>최초 운영: 원본 명단 연결</summary><p>빈 DB에서 현재 지도 작성에 사용한 원본 명단을 연결합니다. 최신 월별 명단이 아닙니다. 지도 ID·좌표·전화번호는 보존됩니다. 기존 DB가 있으면 운영 매뉴얼을 확인하세요.</p><form id="bootstrap"><input type="file" name="file" accept=".xlsx,.csv" required aria-label="최초 원본 명단"><button>초기 연결</button></form></details>
-      <form id="upload"><label>최신 가맹점 명단 (.xlsx/.csv, 10MB 이하)<input type="file" name="file" accept=".xlsx,.csv" required></label><button>업로드 및 자동 비교</button></form>
-      <label>이전 업로드<select id="batches"><option value="">업로드 선택</option></select></label>
-      <div id="summary" class="summary"></div><p id="stale" class="warning"></p>
-      <div class="toolbar"><label>상태<select id="candidateKind"><option value="">전체</option><option value="add" selected>신규 후보</option><option value="change">정보 변경</option><option value="remove">삭제 검토 후보</option><option value="closed">폐업으로 등록 제외</option><option value="review">확인 필요</option><option value="keep">유지</option></select></label><label>검색<input id="candidateSearch" type="search" placeholder="상호·주소·업종"></label><button id="retry" type="button">국세청·좌표 재검증</button></div>
-      <div class="table-wrap"><table><thead><tr><th><input id="selectAll" type="checkbox" aria-label="현재 페이지 승인 가능 항목 전체 선택"></th><th>상태 / 처리</th><th>기존 정보</th><th>업로드 정보</th><th>사업자 상태</th><th>명단 / 지도</th><th>좌표 / 전화</th></tr></thead><tbody id="candidates"></tbody></table></div>
-      <div class="toolbar"><button id="previous">이전</button><span id="pageInfo"></span><button id="next">다음</button></div>
-      <label>승인·보류 사유<input id="approvalReason" maxlength="500" placeholder="예: 2026년 10월 명단 담당자 확인"></label>
-      <div class="toolbar"><span id="selectedCount">0개 선택</span><button id="approve">선택 항목 승인 (추가·변경·지도에서 제외)</button><button id="reject">선택 항목 반영하지 않음</button></div>
-    </section>
-    <section id="requests" hidden><h2>주민 수정 요청</h2><div class="toolbar"><label>처리 상태<select id="requestStatus"><option value="">전체</option><option>미처리</option><option>확인 중</option><option>반영 완료</option><option>반영하지 않음</option></select></label><label>요청 유형<select id="requestKind"><option value="">전체</option></select></label><label>검색<input id="requestSearch" type="search"></label><button id="refreshRequests">새로고침</button></div><p>같은 가맹점·유형의 미처리/확인 중 요청을 건수로 묶어 표시합니다. 신고만으로 자동 제외되지 않습니다.</p><div class="table-wrap"><table><thead><tr><th>접수번호 / 시간</th><th>접수 당시 / 현재 가맹점</th><th>유형 / 묶음 건수</th><th>내용</th><th>처리</th></tr></thead><tbody id="requestRows"></tbody></table></div></section>
-    <section id="merchants" hidden><h2>가맹점 관리</h2><label>검색<input id="merchantSearch" type="search" placeholder="지도 ID·상호명·주소"></label><p>주민 요청을 확인한 뒤 정보 수정·제외·복원할 수 있습니다. 제외 항목도 이력을 보존합니다.</p><div class="table-wrap"><table><thead><tr><th>지도 ID</th><th>가맹점</th><th>등록 상태</th><th>관리</th></tr></thead><tbody id="merchantRows"></tbody></table></div></section>
-    <section id="history" hidden><h2>변경 이력</h2><label>검색<input id="historySearch" type="search" placeholder="가맹점 ID·사유"></label><div class="table-wrap"><table><thead><tr><th>시각 / 담당자</th><th>작업 / 가맹점 / 요청</th><th>이전 값</th><th>변경 값</th><th>사유</th></tr></thead><tbody id="historyRows"></tbody></table></div></section>
-    <section id="publications" hidden><h2>주민 지도 배포</h2><p>DB 승인과 공개 지도 배포는 별도 단계입니다. 공개 파일 생성 → 배포 PR 생성 → GitHub 검증 성공 확인 → 병합 → Pages 성공 확인 순으로 진행하세요. 실패 시 기존 지도는 유지됩니다.</p><button id="createPublication">승인 데이터로 공개 파일 생성</button><div class="table-wrap"><table><thead><tr><th>번호 / 시각</th><th>데이터 버전</th><th>상태</th><th>배포</th></tr></thead><tbody id="publicationRows"></tbody></table></div></section>
-  </main>
-  <dialog id="editDialog"><form id="editForm"><h2>가맹점 정보 확인·처리</h2><pre id="editBefore"></pre><label>상호명<input name="name" maxlength="200" required></label><label>주소<input name="address" maxlength="300" required></label><label>업종<input name="category" maxlength="100" required></label><label>전화번호 (쉼표로 구분)<input name="phones" placeholder="062-123-4567"></label><label>작업<select name="action"><option value="edit">정보 수정</option><option value="exclude">지도에서 제외</option><option value="restore">지도에 복원</option></select></label><label>연결된 주민 요청 ID (선택)<input name="request_id" type="number" min="1"></label><label>처리 사유<input name="reason" maxlength="500" required></label><div class="toolbar"><button type="button" id="closeEdit">취소</button><button>변경 확인 후 승인</button></div></form></dialog>
-  <script src="/static/admin.js"></script>
+  <div class="wrap">
+    <header><a class="brand" href="./index.html"><i>동</i>동구랑페이</a><a class="back" href="./index.html">지도로 돌아가기 →</a></header>
+    <section class="intro"><small>MERCHANT DATA CONSOLE</small><h1>가맹점 데이터 관리</h1><p>검증을 통과한 엑셀 또는 CSV만 반영됩니다. 업로드하면 기존 가맹점 목록 전체가 새 파일의 내용으로 교체됩니다.</p></section>
+    <form class="card" id="uploadForm">
+      <div class="notice">
+        <div><strong>화이트리스트 저장</strong>지정된 5개 컬럼 외에는 데이터베이스에 저장하지 않습니다.</div>
+        <div><strong>개인정보 패턴 검사</strong>주민번호, 전화번호, 이메일 패턴을 검사하고 탐지 시 차단합니다.</div>
+        <div><strong>원자적 전체 교체</strong>검증이나 변환 실패 시 기존 데이터는 그대로 유지됩니다.</div>
+      </div>
+      <label for="adminKey">관리자 업로드 키</label>
+      <input id="adminKey" type="password" autocomplete="current-password" required placeholder="서버에 설정한 ADMIN_KEY">
+      <label for="excelFile">가맹점 데이터 파일</label>
+      <div class="drop" id="dropZone">
+        <input id="excelFile" type="file" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" required>
+        <div><div class="drop-icon">↑</div><strong>.xlsx 또는 .csv 파일을 선택하세요</strong><span>CSV는 UTF-8·CP949 지원, 최대 10MB</span><p class="file-name" id="fileName"></p></div>
+      </div>
+      <button class="submit" id="submitButton" type="submit">검증 후 가맹점 데이터 교체</button>
+      <div class="result" id="result" role="status"></div>
+      <div class="columns"><h2>저장되는 컬럼</h2><div class="tags"><span class="tag">사업자번호</span><span class="tag">가맹점번호</span><span class="tag">가맹점명</span><span class="tag">사업장주소</span><span class="tag">가맹점업종명</span></div></div>
+    </form>
+  </div>
+  <script>
+    const form=document.querySelector('#uploadForm'),file=document.querySelector('#excelFile'),drop=document.querySelector('#dropZone'),result=document.querySelector('#result'),button=document.querySelector('#submitButton');
+    file.addEventListener('change',()=>document.querySelector('#fileName').textContent=file.files[0]?.name||'');
+    ['dragenter','dragover'].forEach(name=>drop.addEventListener(name,e=>{e.preventDefault();drop.classList.add('drag')}));
+    ['dragleave','drop'].forEach(name=>drop.addEventListener(name,e=>{e.preventDefault();drop.classList.remove('drag')}));
+    form.addEventListener('submit',async e=>{e.preventDefault();if(!file.files[0])return;button.disabled=true;button.textContent='검증 및 주소 변환 중...';result.className='result';
+      const data=new FormData();data.append('file',file.files[0]);
+      try{const response=await fetch('/api/admin/upload',{method:'POST',headers:{'X-Admin-Key':document.querySelector('#adminKey').value},body:data});const payload=await response.json();if(!response.ok)throw new Error(payload.detail||'업로드에 실패했습니다.');result.textContent=`${payload.message}\n총 ${payload.imported.toLocaleString()}개 반영 · 좌표 변환 ${payload.geocoded.toLocaleString()}개 · 변환 실패 ${payload.geocode_failed.toLocaleString()}개`;result.className='result show success';}
+      catch(error){result.textContent=error.message;result.className='result show error';}
+      finally{button.disabled=false;button.textContent='검증 후 가맹점 데이터 교체';}
+    });
+  </script>
 </body>
 </html>

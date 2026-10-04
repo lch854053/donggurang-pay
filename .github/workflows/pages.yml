@@ -22,20 +22,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
       - name: Prepare public static site
-        env:
-          PUBLIC_API_BASE_URL: ${{ vars.PUBLIC_API_BASE_URL }}
         run: |
-          git show HEAD^:static/merchant-data.js > previous-merchant-data.js
-          node scripts/validate-public-data.mjs previous-merchant-data.js
           mkdir -p _site
-          cp static/index.html static/app.js static/styles.css static/merchant-data.js static/merchant-phones.js static/merchant-reviewed-phones.js static/donggu-logo.jpg static/mobile-preview.html static/service-config.js static/corrections.js _site/
+          cp static/index.html static/app.js static/styles.css static/merchant-data.js static/merchant-phones.js static/merchant-reviewed-phones.js static/donggu-logo.jpg static/mobile-preview.html _site/
           python3 - <<'PY'
           import os
-          import json
-          from urllib.parse import urlparse
           from pathlib import Path
 
           version = os.environ["GITHUB_SHA"]
@@ -46,16 +38,7 @@ jobs:
           content = content.replace('src="./app.js"', f'src="./app.js?v={version}"')
           content = content.replace('src="./merchant-phones.js"', f'src="./merchant-phones.js?v={version}"')
           content = content.replace('src="./merchant-reviewed-phones.js"', f'src="./merchant-reviewed-phones.js?v={version}"')
-          content = content.replace('src="./service-config.js"', f'src="./service-config.js?v={version}"')
-          content = content.replace('src="./corrections.js"', f'src="./corrections.js?v={version}"')
           index.write_text(content)
-
-          api_url = os.getenv("PUBLIC_API_BASE_URL", "").rstrip("/")
-          if api_url:
-              parsed = urlparse(api_url)
-              if parsed.scheme != "https" or not parsed.netloc or parsed.username or parsed.password or parsed.query or parsed.fragment:
-                  raise ValueError("PUBLIC_API_BASE_URL must be a public HTTPS API URL without credentials")
-          Path("_site/service-config.js").write_text("window.DONGGURANG_PUBLIC_CONFIG=" + json.dumps({"apiBaseUrl": api_url}) + ";\n")
 
           preview = Path("_site/mobile-preview.html")
           content = preview.read_text().replace("./index.html?mobile-test=1", f"./index.html?mobile-test=1&amp;v={version}")
