@@ -87,10 +87,13 @@ function main() {
   for (const filename of ['merchant-data.js', 'merchant-phones.js']) {
     vm.runInNewContext(fs.readFileSync(path.join(root, 'static', filename), 'utf8'), context);
   }
+  const reviewedPath = path.join(root, 'static/merchant-reviewed-phones.js');
+  if (fs.existsSync(reviewedPath)) vm.runInNewContext(fs.readFileSync(reviewedPath, 'utf8'), context);
   const dataset = JSON.parse(fs.readFileSync(path.join(root, 'data/komsco-donggu.json'), 'utf8'));
   const report = JSON.parse(fs.readFileSync(path.join(root, 'reports/merchant-phones.json'), 'utf8'));
   const reasons = Object.fromEntries(report.results.map((item) => [item.id, item.reason]));
-  const candidates = phoneCandidates(context.window.DONGGURANG_MERCHANTS, context.window.DONGGURANG_PHONES, dataset.rows, reasons);
+  const phones = { ...context.window.DONGGURANG_PHONES, ...context.window.DONGGURANG_REVIEWED_PHONES };
+  const candidates = phoneCandidates(context.window.DONGGURANG_MERCHANTS, phones, dataset.rows, reasons);
   const headers = ['가맹점ID', '가맹점명', '현재주소', '기존제외사유', '조폐공사상호명', '조폐공사주소', '후보전화번호',
     '상호비교', '주소비교', '검토사항', '원본기준일', '제공기관', '중복원본행수'];
   const fields = ['id', 'name', 'address', 'previousReason', 'candidateName', 'candidateAddress', 'phone',
