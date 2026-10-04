@@ -25,7 +25,7 @@ jobs:
       - name: Prepare public static site
         run: |
           mkdir -p _site
-          cp static/index.html static/app.js static/styles.css static/merchant-data.js static/merchant-phones.js static/merchant-reviewed-phones.js static/donggu-logo.jpg static/mobile-preview.html _site/
+          cp static/index.html static/app.js static/styles.css static/merchant-data.js static/merchant-phones.js static/merchant-reviewed-phones.js static/donggu-logo.jpg static/donggu-pay-card.png static/mobile-preview.html _site/
           python3 - <<'PY'
           import os
           from pathlib import Path
@@ -38,7 +38,11 @@ jobs:
           content = content.replace('src="./app.js"', f'src="./app.js?v={version}"')
           content = content.replace('src="./merchant-phones.js"', f'src="./merchant-phones.js?v={version}"')
           content = content.replace('src="./merchant-reviewed-phones.js"', f'src="./merchant-reviewed-phones.js?v={version}"')
+          content = content.replace('src="./donggu-pay-card.png"', f'src="./donggu-pay-card.png?v={version}"')
           index.write_text(content)
+
+          styles = Path("_site/styles.css")
+          styles.write_text(styles.read_text().replace('url("./donggu-pay-card.png")', f'url("./donggu-pay-card.png?v={version}")'))
 
           preview = Path("_site/mobile-preview.html")
           content = preview.read_text().replace("./index.html?mobile-test=1", f"./index.html?mobile-test=1&amp;v={version}")
