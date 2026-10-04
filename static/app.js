@@ -335,6 +335,7 @@ function renderMerchantList() {
     if (index >= listLimit) return;
 
     const fragment = template.content.cloneNode(true);
+    fragment.querySelector(".merchant-icon").innerHTML = markerIcon(merchant.group);
     fragment.querySelector("strong").textContent = merchant.name;
     fragment.querySelector(".category").textContent = merchant.category + (hasCoordinates(merchant) ? "" : " · 위치 확인 필요");
     fragment.querySelector(".address").textContent = merchant.address + (merchant.approximate ? " · 위치를 확인해 주세요" : "");
