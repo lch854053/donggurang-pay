@@ -101,9 +101,8 @@ button { color: inherit; }
 .merchant-card { border-bottom: 1px solid #edf0ed; }
 .merchant-card-button { display: grid; grid-template-columns: 43px minmax(0,1fr) auto; gap: 12px; width: 100%; padding: 17px 3px; border: 0; background: transparent; cursor: pointer; text-align: left; }
 .merchant-card-button:hover { background: #f9faf7; }
-.merchant-icon { position: relative; width: 43px; height: 43px; border-radius: 15px; background: #edf6fc; }
-.merchant-icon::before { position: absolute; top: 11px; left: 10px; width: 23px; height: 19px; border: 2px solid var(--accent); border-radius: 4px; content: ""; }
-.merchant-icon::after { position: absolute; top: 8px; left: 8px; width: 27px; height: 7px; border-radius: 4px; background: var(--accent); content: ""; }
+.merchant-icon { display: grid; place-items: center; width: 43px; height: 43px; border-radius: 15px; background: #edf6fc; color: var(--accent); }
+.merchant-icon svg { width: 24px; height: 24px; }
 .merchant-copy { min-width: 0; }
 .merchant-head { display: flex; align-items: center; gap: 7px; }
 .merchant-head strong { overflow: hidden; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
