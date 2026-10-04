@@ -42,18 +42,6 @@
           <div class="flower flower-two" aria-hidden="true">✿</div>
         </div>
 
-        <div class="panel-heading">
-          <div>
-            <p class="eyebrow">DONG-GURANG PAY MAP</p>
-            <h2>우리 동네 가맹점 찾기</h2>
-          </div>
-          <p class="data-count"><strong id="totalMerchantCount">3,762</strong><span>가맹점</span></p>
-        </div>
-        <div class="search-tabs" role="tablist" aria-label="검색 방식">
-          <button class="tab active" id="nearbyTab" type="button" role="tab" aria-selected="true" data-tab="nearby">내 주변</button>
-          <button class="tab" id="searchTab" type="button" role="tab" aria-selected="false" data-tab="search">직접 검색</button>
-        </div>
-
         <form class="search-form" id="searchForm">
           <label class="search-box">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg>
@@ -63,14 +51,6 @@
           </label>
           <p class="search-hint" id="searchHint">상호명, 주소, 업종을 함께 검색합니다.</p>
         </form>
-
-        <div class="category-filters" role="group" aria-label="업종 선택"></div>
-
-        <div class="filter-row" aria-label="검색 조건">
-          <button class="filter-chip" type="button" data-filter="radius" data-value="1000">
-            <span class="chip-icon">◎</span><span id="radiusLabel">1km 이내</span><span class="chevron">⌄</span>
-          </button>
-        </div>
 
         <div class="panel-status">
           <strong id="listTitle">가맹점 목록</strong>
@@ -94,19 +74,8 @@
         <button class="location-button" id="locationButton" type="button" aria-label="내 위치로 이동" title="내 위치로 이동">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><circle cx="12" cy="12" r="8"></circle><path d="M12 2V4M12 20v2M2 12h2M20 12h2"></path></svg>
         </button>
-        <div class="map-notice" id="mapNotice"><strong>2026.09.07 기준</strong><span>사업장 주소 기준 위치 · 확인되지 않은 주소는 지도에서 제외됩니다.</span></div>
-        <div class="map-legend"><span></span> 동구랑페이 가맹점</div>
       </section>
     </main>
-  </div>
-
-  <div class="select-sheet" id="selectSheet" aria-hidden="true">
-    <button class="sheet-backdrop" type="button" data-close-select aria-label="닫기"></button>
-    <div class="select-card" role="dialog" aria-modal="true">
-      <div class="sheet-handle"></div>
-      <div class="sheet-header"><h2 id="selectTitle">조건 선택</h2><button type="button" data-close-select aria-label="닫기">×</button></div>
-      <div class="select-options" id="selectOptions"></div>
-    </div>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>

@@ -147,9 +147,7 @@ const state = {
   sheetLevel: "compact",
   config: {},
   category: "all",
-  radius: 1000,
   query: "",
-  tab: "nearby",
   userLocation: null,
   sortAscending: true,
   staticMode: false
@@ -278,11 +276,6 @@ async function fetchMerchants() {
   }
   const params = new URLSearchParams({ limit: "5000" });
   if (state.query) params.set("q", state.query);
-  if (state.userLocation && state.tab === "nearby") {
-    params.set("lat", state.userLocation.lat);
-    params.set("lng", state.userLocation.lng);
-    params.set("radius", state.radius);
-  }
   try {
     const response = await fetch(`/api/merchants?${params}`);
     if (!response.ok) throw new Error("Merchant API error");
@@ -310,8 +303,7 @@ function applyClientFilters() {
     const categoryMatches = state.category === "all" || merchant.groups.includes(state.category);
     const distance = origin && hasCoordinates(merchant) ? distanceMeters(origin, merchant) : null;
     merchant.distance = distance;
-    const radiusMatches = state.tab !== "nearby" || !origin || distance === null || distance <= state.radius;
-    return queryMatches && categoryMatches && radiusMatches;
+    return queryMatches && categoryMatches;
   });
   if (state.sortAscending && origin) items = items.sort((a, b) => a.distance - b.distance);
   if (!state.sortAscending) items = items.sort((a, b) => a.name.localeCompare(b.name, "ko-KR"));
@@ -490,23 +482,11 @@ function locateUser({ initial = false } = {}) {
       zIndexOffset: 1000
     }).addTo(state.map).bindTooltip("내 위치", { direction: "top", offset: [0, -10] });
     state.map.flyTo(state.userLocation, 16, { duration: .7 });
-    state.tab = "nearby";
-    setActiveTab("nearby");
     fetchMerchants();
   }, (error) => {
     button.classList.remove("loading");
     if (!initial) showToast(error.code === 1 ? "위치 권한을 허용하면 내 주변을 찾을 수 있어요." : "현재 위치를 확인하지 못했습니다.");
   }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
-}
-
-function setActiveTab(tab) {
-  state.tab = tab;
-  $$(".tab").forEach((button) => {
-    const active = button.dataset.tab === tab;
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-selected", String(active));
-  });
-  if (tab === "nearby" && !state.userLocation) locateUser();
 }
 
 const SHEET_LEVELS = ["collapsed", "compact", "expanded"];
@@ -608,34 +588,7 @@ function selectCategory(category) {
   state.category = category;
   updateCategoryFilters();
   // Keep the search term when narrowing results by industry.
-  if (window.matchMedia("(max-width: 760px)").matches) {
-    setActiveTab("search");
-    fetchMerchants().then(showFilteredMerchantsOnMap);
-  } else applyClientFilters();
-}
-
-function openSelectSheet() {
-  const options = [{ value: 500, label: "500m 이내" }, { value: 1000, label: "1km 이내" }, { value: 3000, label: "3km 이내" }, { value: 5000, label: "5km 이내" }];
-  $("#selectTitle").textContent = "검색 거리 선택";
-  const container = $("#selectOptions");
-  container.replaceChildren();
-  options.forEach((option) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "select-option";
-    button.textContent = option.label;
-    button.classList.toggle("active", state.radius === option.value);
-    button.addEventListener("click", () => {
-      state.radius = option.value;
-      $("#radiusLabel").textContent = option.label;
-      $("#selectSheet").classList.remove("open");
-      $("#selectSheet").setAttribute("aria-hidden", "true");
-      applyClientFilters();
-    });
-    container.appendChild(button);
-  });
-  $("#selectSheet").classList.add("open");
-  $("#selectSheet").setAttribute("aria-hidden", "false");
+  fetchMerchants().then(showFilteredMerchantsOnMap);
 }
 
 async function searchAddress(query) {
@@ -665,18 +618,17 @@ function bindEvents() {
       if (window.matchMedia("(max-width: 760px)").matches && event.touches.length > 1) event.preventDefault();
     }, { passive: false });
   });
-  $$(".tab").forEach((button) => button.addEventListener("click", () => setActiveTab(button.dataset.tab)));
   const submitSearch = async (event) => {
     event.preventDefault();
     state.query = (event.currentTarget.id === "mobileSearchForm" ? $("#mobileSearchInput") : $("#searchInput")).value.trim();
     $("#searchInput").value = state.query;
     $("#mobileSearchInput").value = state.query;
     updateSearchClearButtons();
-    setActiveTab("search");
     if (state.query) {
       await searchAddress(state.query);
     }
     await fetchMerchants();
+    showFilteredMerchantsOnMap();
     $("#mobileSearchInput").blur();
   };
   $("#searchForm").addEventListener("submit", submitSearch);
@@ -692,11 +644,9 @@ function bindEvents() {
     $("#mobileSearchInput").value = "";
     updateSearchClearButtons();
     $("#" + button.dataset.clearSearch).focus();
-    setActiveTab("search");
     fetchMerchants();
   }));
   updateSearchClearButtons();
-  $$(".filter-chip").forEach((button) => button.addEventListener("click", () => openSelectSheet()));
   $("#locationButton").addEventListener("click", () => locateUser());
   $("#clearSelectionButton").addEventListener("click", () => {
     state.selectedMerchants = null;
@@ -705,20 +655,10 @@ function bindEvents() {
     renderMerchantList();
     $("#merchantList").scrollTop = 0;
   });
-  $$('[data-close-select]').forEach((button) => button.addEventListener("click", () => {
-    $("#selectSheet").classList.remove("open");
-    $("#selectSheet").setAttribute("aria-hidden", "true");
-  }));
   $("#sortButton").addEventListener("click", () => {
     state.sortAscending = !state.sortAscending;
     $("#sortButton").firstChild.textContent = state.sortAscending ? "가까운 순 " : "가맹점명 순 ";
     applyClientFilters();
-  });
-  window.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      $("#selectSheet").classList.remove("open");
-      $("#selectSheet").setAttribute("aria-hidden", "true");
-    }
   });
 }
 
@@ -760,15 +700,9 @@ async function main() {
   // Let the browser paint and request the base tiles before parsing merchant data.
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 0))));
   await fetchMerchants();
-  const total = MOBILE_SAMPLE_MODE
-    ? state.merchants.length
-    : state.staticMode ? (window.DONGGURANG_DATA_META?.count || state.merchants.length) : state.merchants.length;
-  $("#totalMerchantCount").textContent = total.toLocaleString("ko-KR");
   if (MOBILE_SAMPLE_MODE) {
-    $("#mapNotice").innerHTML = "<strong>모바일 시범자료</strong><span>테스트용 가맹점 12개입니다.</span>";
     showToast("모바일 테스트용 시범자료 12개를 불러왔습니다.");
   } else if (!state.staticMode) {
-    $("#mapNotice").hidden = true;
     setTimeout(() => locateUser({ initial: true }), 500);
   }
 }
