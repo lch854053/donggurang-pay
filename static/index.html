@@ -24,9 +24,9 @@
       </div>
     </header>
 
-    <main class="workspace">
+    <main class="workspace" data-sheet-level="compact">
       <section class="search-panel" aria-label="가맹점 검색">
-        <button class="panel-handle" id="panelHandle" type="button" aria-label="가맹점 목록 접기" aria-expanded="true"><span></span></button>
+        <button class="panel-handle" id="panelHandle" type="button" aria-label="가맹점 목록 크게 펼치기" aria-expanded="true" aria-controls="merchantList"><span></span></button>
         <div class="brand-card" aria-label="동구랑페이 브랜드 안내">
           <span class="spark spark-one" aria-hidden="true">✦</span>
           <span class="spark spark-two" aria-hidden="true">✦</span>
@@ -72,7 +72,8 @@
         </div>
 
         <div class="panel-status">
-          <span><i class="status-dot"></i><strong id="resultCount">0</strong>개의 가맹점</span>
+          <strong id="listTitle">가맹점 목록</strong>
+          <button id="clearSelectionButton" type="button" hidden>전체 목록</button>
           <button id="sortButton" type="button">가까운 순 <span>⌄</span></button>
         </div>
 
