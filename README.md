@@ -53,7 +53,33 @@ node scripts/import-merchant-phones.mjs --cached --apply
 
 API가 현재 광주 동구에 사용하는 지역코드는 `12210`입니다(법정동 시군구 코드 `29110` 조회는 0건). 원본은 Git 제외 디렉터리 `data/komsco-donggu.json`에 보관합니다. 공개 번호와 원본 기준일은 `static/merchant-phones.js`, 매칭·제외 사유는 `reports/merchant-phones.json`에 기록합니다. API 인증키와 사업자등록번호는 공개 자료에 포함하지 않습니다. 전화번호 자료는 배포 버전별 URL로 불러옵니다.
 
-### 공개 가맹점 중복 정리
+### 전화번호 추가 연결 후보 검토
+
+공개 전화번호에 없는 가맹점을 대상으로 기존 조폐공사 원본에서 후보를 내보냅니다.
+
+```sh
+node scripts/export-phone-candidates.mjs
+```
+
+`reports/komsco-phone-candidates.csv`는 79개 가맹점의 87개 후보 행입니다. 동일 상호(영문 대소문자·법인·기호 표기 차이 포함) 또는 1글자 차이 상호가 같은 도로명·건물번호에 있고, 유효한 번호와 계속사업자 등록이 있는 원본만 후보로 담습니다. 층·호수 차이, 타 지역번호, 다수 업체에 공통으로 등록된 번호는 검토사항을 확인해야 합니다. 후보 파일은 자동 반영 목록이 아닙니다.
+
+추가 승인받은 행정안전부 일반음식점·휴게음식점·제과점영업 API는 `.env`의 `MOIS_SERVICE_KEY`로 조회합니다.
+
+```sh
+node --env-file=.env scripts/review-food-phones.mjs
+node scripts/review-food-phones.mjs --cached
+```
+
+현재 광주 동구의 개방자치단체코드는 `5805000`, 조회 경로는 각 서비스의 `/info`입니다. 원본은 `data/mois-*.json`에 보관하며 전체 페이지 수·중복 관리번호·지역코드를 검증합니다. 2026년 10월 4일 일반음식점 8,753건, 휴게음식점 2,498건, 제과점영업 248건을 검토했습니다. 영업/정상 및 상세영업상태 영업인 행에서 임시번호를 제외하고 상호·주소를 비교합니다.
+
+- `reports/food-phone-additions.csv`: 현재 번호가 없고 상호·상세주소가 일치하는 30개 가맹점의 후보. 인허가 자료에서 단일 번호라는 뜻이며, 다른 출처의 충돌 이력이나 번호의 현재 유효성까지 확정한 것은 아닙니다.
+- `reports/food-phone-review-candidates.csv`: 상호·도로명·건물번호만 일치하는 34개 가맹점. 층·호수·건물명 등 상세주소 확인 필요.
+- `reports/food-phone-existing-differences.csv`: 이미 공개된 번호와 인허가 번호가 다른 20개 가맹점. 기존 번호를 자동 교체하지 않습니다.
+- `reports/food-phone-api-review.json`: API별 전체/영업/번호 보유 건수와 대조 결과.
+
+CSV는 UTF-8 BOM, 표준 CSV 인용·이스케이프, CRLF 형식입니다. 검토 스크립트는 공개 가맹점 및 전화번호 자료를 변경하지 않습니다.
+
+### 공개 가맹점 중복 정리 방법
 
 `node scripts/deduplicate-merchants.mjs`로 중복 건수를 검토하고, `--apply`를 붙이면 정적 자료에 반영합니다. 상호명·상세주소의 공백만 정규화하고 좌표까지 일치하는 행을 병합합니다. 층·호수를 제거하거나 같은 건물의 좌표만으로 병합하지 않으며, 주소 표기 위치 차이는 스크립트에 명시된 개별 검토 사례만 허용합니다.
 
