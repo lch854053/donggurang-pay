@@ -185,7 +185,8 @@ button { color: inherit; }
   .map-topbar { top: 14px; right: 0; left: 0; flex-direction: column; gap: 8px; pointer-events: none; }
   .mobile-search-form { display: flex; flex: none; align-items: center; min-width: 0; height: 48px; margin: 0 14px; padding-left: 13px; border-radius: 24px; background: rgba(255,255,255,.97); box-shadow: var(--shadow); pointer-events: auto; }
   .mobile-search-form:focus-within { outline: 2px solid var(--accent); }
-  .mobile-search-form input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 14px; }
+  /* iOS Safari auto-zooms focused inputs when their text is smaller than 16px. */
+  .mobile-search-form input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 16px; }
   .mobile-search-form input::placeholder { color: #8b9893; }
   .mobile-search-form button { display: grid; place-items: center; flex: 0 0 42px; height: 100%; border: 0; background: transparent; cursor: pointer; }
   .mobile-search-form svg { width: 20px; height: 20px; fill: none; stroke: var(--accent); stroke-linecap: round; stroke-width: 2; }
