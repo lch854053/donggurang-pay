@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from openpyxl import Workbook
 
 from app.main import app, db_connect, parse_csv, parse_excel
+import pytest
 
 
 def workbook_bytes(rows):
@@ -30,32 +31,17 @@ def test_health_and_empty_list(tmp_path, monkeypatch):
         assert client.get("/api/merchants").json() == {"items": [], "total": 0}
 
 
-def test_upload_discards_known_pii_columns(tmp_path, monkeypatch):
-    monkeypatch.setattr("app.main.DATA_DIR", tmp_path)
-    monkeypatch.setattr("app.main.DB_PATH", tmp_path / "test.db")
+def test_parser_discards_known_pii_columns():
     content = workbook_bytes([["1234567890", "M-1", "동구상점", "광주 동구 서남로 1", "소매", "홍길동", "010-1234-5678"]])
-    with TestClient(app) as client:
-        response = client.post(
-            "/api/admin/upload",
-            headers={"X-Admin-Key": "test-admin-key"},
-            files={"file": ("merchants.xlsx", content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
-        )
-        assert response.status_code == 200
-        assert response.json()["imported"] == 1
+    parsed = parse_excel(content, review=True)
+    assert len(parsed) == 1
+    assert "대표자명" not in parsed[0] and "휴대전화번호" not in parsed[0]
 
 
-def test_upload_blocks_pii_in_safe_column(tmp_path, monkeypatch):
-    monkeypatch.setattr("app.main.DATA_DIR", tmp_path)
-    monkeypatch.setattr("app.main.DB_PATH", tmp_path / "test.db")
+def test_parser_blocks_pii_in_safe_column():
     content = workbook_bytes([["1234567890", "M-1", "연락처 010-2222-3333", "광주 동구 서남로 1", "소매", "", ""]])
-    with TestClient(app) as client:
-        response = client.post(
-            "/api/admin/upload",
-            headers={"X-Admin-Key": "test-admin-key"},
-            files={"file": ("merchants.xlsx", content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
-        )
-        assert response.status_code == 422
-        assert "휴대전화번호 패턴" in response.json()["detail"]
+    with pytest.raises(ValueError, match="휴대전화번호 패턴"):
+        parse_excel(content, review=True)
 
 
 def test_parse_cp949_csv_skips_empty_error_row():
@@ -77,7 +63,7 @@ def test_parse_cp949_csv_skips_empty_error_row():
     }]
 
 
-def test_upload_excludes_closed_rows_and_categories(tmp_path, monkeypatch):
+def test_legacy_parser_and_disabled_replacement(tmp_path, monkeypatch):
     monkeypatch.setattr("app.main.DATA_DIR", tmp_path)
     monkeypatch.setattr("app.main.DB_PATH", tmp_path / "test.db")
     workbook = Workbook()
@@ -89,16 +75,16 @@ def test_upload_excludes_closed_rows_and_categories(tmp_path, monkeypatch):
     output = io.BytesIO()
     workbook.save(output)
     assert len(parse_excel(output.getvalue())) == 1
+    assert len(parse_excel(output.getvalue(), review=True)) == 2
     with TestClient(app) as client:
         response = client.post(
             "/api/admin/upload", headers={"X-Admin-Key": "test-admin-key"},
             files={"file": ("merchants.xlsx", output.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")},
         )
-        assert response.status_code == 200, response.text
-        assert response.json()["imported"] == 1
+        assert response.status_code == 410, response.text
         with db_connect() as connection:
-            assert connection.execute("SELECT name, business_status FROM merchants").fetchall()[0][:] == ("동구분식", "계속사업자")
-        assert client.get("/api/categories").json() == {"items": ["스넥"]}
+            assert connection.execute("SELECT COUNT(*) FROM merchants").fetchone()[0] == 0
+        assert client.get("/api/categories").json() == {"items": []}
 
 
 def test_csv_closed_row_does_not_trigger_duplicate_number():
