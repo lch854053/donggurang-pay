@@ -93,12 +93,16 @@ let merchantRequestVersion = 0;
 
 function loadStaticMerchants() {
   if (MOBILE_SAMPLE_MODE) return Promise.resolve(SAMPLE_MERCHANTS);
-  if (Array.isArray(window.DONGGURANG_MERCHANTS)) return Promise.resolve(window.DONGGURANG_MERCHANTS);
+  const withPhones = (merchants) => merchants.map((merchant) => ({
+    ...merchant, ...(window.DONGGURANG_PHONES?.[merchant.id] || {})
+  }));
+  if (Array.isArray(window.DONGGURANG_MERCHANTS)) return Promise.resolve(withPhones(window.DONGGURANG_MERCHANTS));
   return new Promise((resolve) => {
     const script = document.createElement("script");
     const version = document.querySelector('meta[name="app-version"]')?.content;
     script.src = "./merchant-data.js" + (version ? `?v=${encodeURIComponent(version)}` : "");
-    script.onload = () => resolve(window.DONGGURANG_MERCHANTS || SAMPLE_MERCHANTS);
+    script.onload = () => resolve(Array.isArray(window.DONGGURANG_MERCHANTS)
+      ? withPhones(window.DONGGURANG_MERCHANTS) : SAMPLE_MERCHANTS);
     script.onerror = () => {
       showToast("가맹점 자료를 불러오지 못해 시범자료를 표시합니다.");
       resolve(SAMPLE_MERCHANTS);
@@ -342,6 +346,14 @@ function renderMerchantList() {
     fragment.querySelector("strong").textContent = merchant.name;
     fragment.querySelector(".category").textContent = merchant.categories.join(" · ") + (hasCoordinates(merchant) ? "" : " · 위치 확인 필요");
     fragment.querySelector(".address").textContent = merchant.address + (merchant.approximate ? " · 위치를 확인해 주세요" : "");
+    const phoneLink = fragment.querySelector(".merchant-phone");
+    if (merchant.phone && /^\d[\d-]{6,14}$/.test(merchant.phone)) {
+      phoneLink.hidden = false;
+      phoneLink.textContent = `전화 ${merchant.phone}`;
+      phoneLink.href = `tel:${merchant.phone.replace(/-/g, "")}`;
+      phoneLink.setAttribute("aria-label", `${merchant.name} 전화 걸기 ${merchant.phone}`);
+      phoneLink.title = "한국조폐공사 등록 전화번호";
+    }
     fragment.querySelector(".distance").textContent = hasCoordinates(merchant) ? formatDistance(merchant.distance) : "위치 확인 필요";
     fragment.querySelector("button").addEventListener("click", () => {
       if (!hasCoordinates(merchant)) {

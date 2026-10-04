@@ -25,7 +25,7 @@ jobs:
       - name: Prepare public static site
         run: |
           mkdir -p _site
-          cp static/index.html static/app.js static/styles.css static/merchant-data.js static/donggu-logo.jpg static/mobile-preview.html _site/
+          cp static/index.html static/app.js static/styles.css static/merchant-data.js static/merchant-phones.js static/donggu-logo.jpg static/mobile-preview.html _site/
           python3 - <<'PY'
           import os
           from pathlib import Path
@@ -36,6 +36,7 @@ jobs:
           content = content.replace('</head>', f'<meta name="app-version" content="{version}">\n</head>')
           content = content.replace('href="./styles.css"', f'href="./styles.css?v={version}"')
           content = content.replace('src="./app.js"', f'src="./app.js?v={version}"')
+          content = content.replace('src="./merchant-phones.js"', f'src="./merchant-phones.js?v={version}"')
           index.write_text(content)
 
           preview = Path("_site/mobile-preview.html")
