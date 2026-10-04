@@ -84,6 +84,7 @@ function displayCategory(category, name = "") {
 }
 const LIST_RENDER_LIMIT = 100;
 const visibleMarkers = new Map();
+const highlightedLayers = new Set();
 let markerUpdateTimer;
 let sizeFrame;
 let lastMapSize = "";
@@ -133,6 +134,7 @@ const state = {
   merchants: [],
   filtered: [],
   selectedMerchants: null,
+  highlightedMerchants: [],
   listLimit: LIST_RENDER_LIMIT,
   sheetLevel: "compact",
   config: {},
@@ -211,6 +213,7 @@ function initMap() {
     ? L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 46, spiderfyOnMaxZoom: false, zoomToBoundsOnClick: false })
     : L.layerGroup();
   state.markerLayer.on("clusterclick", (event) => selectMapCluster(event.layer));
+  state.markerLayer.on("animationend", updateMarkerSelection);
   state.map.addLayer(state.markerLayer);
   state.map.on("moveend", () => {
     scheduleVisibleMarkers();
@@ -305,6 +308,7 @@ function applyClientFilters() {
   if (!state.sortAscending) items = items.sort((a, b) => a.name.localeCompare(b.name, "ko-KR"));
   state.filtered = items;
   state.selectedMerchants = null;
+  state.highlightedMerchants = [];
   state.listLimit = LIST_RENDER_LIMIT;
   renderMerchantList();
   renderVisibleMarkers();
@@ -339,6 +343,8 @@ function renderMerchantList() {
         showToast("이 가맹점의 정확한 위치를 확인 중입니다.");
         return;
       }
+      state.highlightedMerchants = [merchant];
+      updateMarkerSelection();
       if (window.matchMedia("(max-width: 760px)").matches) setPanelLevel("compact");
       // Place the selected address in the visible map area above the sheet.
       const point = state.map.project([merchant.lat, merchant.lng], 19);
@@ -365,15 +371,46 @@ function renderMerchantList() {
 
 function showSelectedMerchants(merchants) {
   state.selectedMerchants = merchants;
+  state.highlightedMerchants = merchants;
+  updateMarkerSelection();
   renderMerchantList();
   $("#merchantList").scrollTop = 0;
   if (state.sheetLevel === "collapsed") setPanelLevel("compact");
 }
 
 function selectMapCluster(cluster) {
+  const merchants = cluster.getAllChildMarkers().map((marker) => marker.merchant);
   if (state.map.getZoom() >= state.map.getMaxZoom()) {
-    showSelectedMerchants(cluster.getAllChildMarkers().map((marker) => marker.merchant));
-  } else cluster.zoomToBounds();
+    showSelectedMerchants(merchants);
+  } else {
+    state.highlightedMerchants = merchants;
+    updateMarkerSelection();
+    cluster.zoomToBounds();
+  }
+}
+
+function updateMarkerSelection() {
+  for (const layer of highlightedLayers) {
+    const element = layer.getElement?.();
+    element?.classList.remove("map-marker-selected");
+    element?.setAttribute("aria-pressed", "false");
+    layer.setZIndexOffset?.(0);
+  }
+  highlightedLayers.clear();
+  if (!state.markerLayer) return;
+  for (const merchant of state.highlightedMerchants) {
+    const marker = visibleMarkers.get(merchant);
+    if (!marker) continue;
+    // Leaflet replaces cluster elements as zoom/viewport changes. Follow the visible parent.
+    const layer = state.markerLayer.getVisibleParent?.(marker) || marker;
+    if (highlightedLayers.has(layer)) continue;
+    const element = layer.getElement?.();
+    if (!element) continue;
+    element.classList.add("map-marker-selected");
+    element.setAttribute("aria-pressed", "true");
+    layer.setZIndexOffset?.(1000);
+    highlightedLayers.add(layer);
+  }
 }
 
 function renderVisibleMarkers() {
@@ -405,6 +442,7 @@ function renderVisibleMarkers() {
   }
   if (typeof state.markerLayer.addLayers === "function") state.markerLayer.addLayers(added);
   else added.forEach((marker) => state.markerLayer.addLayer(marker));
+  updateMarkerSelection();
 }
 
 function locateUser({ initial = false } = {}) {
@@ -611,6 +649,8 @@ function bindEvents() {
   $("#locationButton").addEventListener("click", () => locateUser());
   $("#clearSelectionButton").addEventListener("click", () => {
     state.selectedMerchants = null;
+    state.highlightedMerchants = [];
+    updateMarkerSelection();
     renderMerchantList();
     $("#merchantList").scrollTop = 0;
   });
