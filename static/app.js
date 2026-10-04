@@ -107,13 +107,14 @@ function loadStaticMerchants() {
 
 function categoryGroup(category) {
   const value = String(category || "").replace(/\s+/g, "");
+  if (/자동차|오토바이|이륜차|렌터|렌트카|주차|세차|타이어|주유|유류|정유|가스충전|반려동물|애완동물|동물병원/.test(value)) return "기타";
   if (/한식|양식|카페|일식|중식|분식|술집|바$|빵집|디저트/.test(value)) return "음식점·카페";
   if (/농수|축산|정육|마트|편의점|식품|음료|쌀가게|주류|꽃집/.test(value)) return "식품·마트";
   if (/미용|화장품|의류|신발|가방|주얼리|액세서리|안경|시계|원단|침구|수예|속옷|이발|피부|커튼|카펫/.test(value)) return "패션·뷰티";
   if (/약국|의원|병원|한의|의료|건강|마사지|헬스/.test(value)) return "의료·건강";
   if (/학원|독서실|서점|문구|문화|취미|갤러리|미술|음반|영상|악기|티켓|출판|인쇄|사진|장난감|공예|교육/.test(value)) return "교육·문화";
-  if (/세탁|자동차|주차|수리|부동산|인테리어|설비|건축|가구|주방|전기|가전|조명|유리|페인트|통신|휴대폰|컴퓨터|소프트웨어|공구|주유|가스/.test(value)) return "생활·주거";
-  if (/스포츠|여가|골프|당구|볼링|노래방|수영|사우나|여행|숙박|렌터|반려동물|오토바이/.test(value)) return "스포츠·여가";
+  if (/세탁|수리|부동산|인테리어|설비|건축|가구|주방|전기|가전|조명|유리|페인트|통신|휴대폰|컴퓨터|소프트웨어|공구|가스/.test(value)) return "생활·주거";
+  if (/스포츠|여가|골프|당구|볼링|노래방|수영|사우나|여행|숙박/.test(value)) return "스포츠·여가";
   return "기타";
 }
 
@@ -131,6 +132,9 @@ const state = {
   userMarker: null,
   merchants: [],
   filtered: [],
+  selectedMerchants: null,
+  listLimit: LIST_RENDER_LIMIT,
+  sheetLevel: "compact",
   config: {},
   category: "all",
   radius: 1000,
@@ -204,8 +208,9 @@ function initMap() {
   }).addTo(state.map);
   L.control.zoom({ position: "bottomright" }).addTo(state.map);
   state.markerLayer = typeof L.markerClusterGroup === "function"
-    ? L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 46, spiderfyOnMaxZoom: true })
+    ? L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 46, spiderfyOnMaxZoom: false, zoomToBoundsOnClick: false })
     : L.layerGroup();
+  state.markerLayer.on("clusterclick", (event) => selectMapCluster(event.layer));
   state.map.addLayer(state.markerLayer);
   state.map.on("moveend", () => {
     scheduleVisibleMarkers();
@@ -299,6 +304,8 @@ function applyClientFilters() {
   if (state.sortAscending && origin) items = items.sort((a, b) => a.distance - b.distance);
   if (!state.sortAscending) items = items.sort((a, b) => a.name.localeCompare(b.name, "ko-KR"));
   state.filtered = items;
+  state.selectedMerchants = null;
+  state.listLimit = LIST_RENDER_LIMIT;
   renderMerchantList();
   renderVisibleMarkers();
 }
@@ -306,47 +313,67 @@ function applyClientFilters() {
 function renderMerchantList() {
   const list = $("#merchantList");
   list.replaceChildren();
-  $("#resultCount").textContent = state.filtered.length.toLocaleString("ko-KR");
+  const items = state.selectedMerchants || state.filtered;
+  list.classList.toggle("selection", Boolean(state.selectedMerchants));
+  $("#listTitle").textContent = state.selectedMerchants ? (items.length === 1 ? "선택한 가맹점" : "이 위치의 가맹점") : "가맹점 목록";
+  $("#clearSelectionButton").hidden = !state.selectedMerchants;
+  $("#sortButton").hidden = Boolean(state.selectedMerchants);
 
-  if (!state.filtered.length) {
+  if (!items.length) {
     list.innerHTML = '<div class="empty-state"><span>⌕</span><strong>조건에 맞는 가맹점이 없어요</strong>검색어나 범위를 바꿔 다시 찾아보세요.</div>';
     return;
   }
 
   const template = $("#merchantTemplate");
-  const listLimit = window.matchMedia("(max-width: 760px)").matches ? 24 : LIST_RENDER_LIMIT;
-  state.filtered.forEach((merchant, index) => {
+  const listLimit = state.selectedMerchants ? items.length : state.listLimit;
+  items.forEach((merchant, index) => {
     if (index >= listLimit) return;
 
     const fragment = template.content.cloneNode(true);
     fragment.querySelector("strong").textContent = merchant.name;
     fragment.querySelector(".category").textContent = merchant.category + (hasCoordinates(merchant) ? "" : " · 위치 확인 필요");
-    fragment.querySelector(".address").textContent = merchant.address;
+    fragment.querySelector(".address").textContent = merchant.address + (merchant.approximate ? " · 위치를 확인해 주세요" : "");
     fragment.querySelector(".distance").textContent = hasCoordinates(merchant) ? formatDistance(merchant.distance) : "위치 확인 필요";
     fragment.querySelector("button").addEventListener("click", () => {
       if (!hasCoordinates(merchant)) {
         showToast("이 가맹점의 정확한 위치를 확인 중입니다.");
         return;
       }
-      state.map.once("moveend", () => {
-        renderVisibleMarkers();
-        const marker = visibleMarkers.get(merchant);
-        if (marker) {
-          if (typeof state.markerLayer.zoomToShowLayer === "function") state.markerLayer.zoomToShowLayer(marker, () => marker.openPopup());
-          else marker.openPopup();
-        }
-      });
-      state.map.flyTo([merchant.lat, merchant.lng], 18, { duration: .7 });
+      if (window.matchMedia("(max-width: 760px)").matches) setPanelLevel("compact");
+      // Place the selected address in the visible map area above the sheet.
+      const point = state.map.project([merchant.lat, merchant.lng], 19);
+      if (window.matchMedia("(max-width: 760px)").matches) point.y += panelHeight("compact") / 2;
+      state.map.flyTo(state.map.unproject(point, 19), 19, { duration: .7 });
     });
     list.appendChild(fragment);
   });
 
-  if (state.filtered.length > listLimit) {
-    const more = document.createElement("p");
+  if (items.length > listLimit) {
+    const more = document.createElement("button");
+    more.type = "button";
     more.className = "list-limit-note";
-    more.textContent = `목록은 ${listLimit.toLocaleString("ko-KR")}개까지 표시됩니다. 검색어와 업종을 선택해 좁혀 보세요.`;
+    more.textContent = "가맹점 더 보기";
+    more.addEventListener("click", () => {
+      const scrollTop = list.scrollTop;
+      state.listLimit += LIST_RENDER_LIMIT;
+      renderMerchantList();
+      list.scrollTop = scrollTop;
+    });
     list.appendChild(more);
   }
+}
+
+function showSelectedMerchants(merchants) {
+  state.selectedMerchants = merchants;
+  renderMerchantList();
+  $("#merchantList").scrollTop = 0;
+  if (state.sheetLevel === "collapsed") setPanelLevel("compact");
+}
+
+function selectMapCluster(cluster) {
+  if (state.map.getZoom() >= state.map.getMaxZoom()) {
+    showSelectedMerchants(cluster.getAllChildMarkers().map((marker) => marker.merchant));
+  } else cluster.zoomToBounds();
 }
 
 function renderVisibleMarkers() {
@@ -371,8 +398,8 @@ function renderVisibleMarkers() {
     const marker = L.marker([merchant.lat, merchant.lng], {
       icon: L.divIcon({ className: "merchant-marker", html: markerIcon(merchant.group), iconSize: [34, 34], iconAnchor: [17, 34] })
     });
-    const locationNote = merchant.approximate ? '<p class="popup-note">위치를 확인해 주세요</p>' : "";
-    marker.bindPopup(`<div class="popup-category">${escapeHtml(merchant.category)}</div><h3 class="popup-title">${escapeHtml(merchant.name)}</h3><p class="popup-address">${escapeHtml(merchant.address)}</p>${locationNote}`, { className: "merchant-popup", offset: [0, -24] });
+    marker.merchant = merchant;
+    marker.on("click", () => showSelectedMerchants([merchant]));
     visibleMarkers.set(merchant, marker);
     added.push(marker);
   }
@@ -415,10 +442,20 @@ function setActiveTab(tab) {
   if (tab === "nearby" && !state.userLocation) locateUser();
 }
 
-function setPanelCollapsed(collapsed) {
-  $(".search-panel").classList.toggle("collapsed", collapsed);
-  $("#panelHandle").setAttribute("aria-expanded", String(!collapsed));
-  $("#panelHandle").setAttribute("aria-label", collapsed ? "가맹점 목록 펼치기" : "가맹점 목록 접기");
+const SHEET_LEVELS = ["collapsed", "compact", "expanded"];
+
+function panelHeight(level) {
+  const workspaceHeight = $(".workspace").clientHeight;
+  if (level === "collapsed") return 34;
+  if (level === "expanded") return Math.max(34, workspaceHeight - 130);
+  return Math.min(240, workspaceHeight * .45);
+}
+
+function setPanelLevel(level) {
+  state.sheetLevel = level;
+  $(".workspace").dataset.sheetLevel = level;
+  $("#panelHandle").setAttribute("aria-expanded", String(level !== "collapsed"));
+  $("#panelHandle").setAttribute("aria-label", level === "collapsed" ? "가맹점 목록 펼치기" : level === "compact" ? "가맹점 목록 크게 펼치기" : "가맹점 목록 접기");
 }
 
 function showFilteredMerchantsOnMap() {
@@ -431,20 +468,49 @@ function showFilteredMerchantsOnMap() {
 
 function bindPanelGestures() {
   const panel = $(".search-panel");
+  const handle = $("#panelHandle");
   let start = null;
-  panel.addEventListener("touchstart", (event) => {
-    start = { x: event.touches[0].clientX, y: event.touches[0].clientY };
-  }, { passive: true });
-  panel.addEventListener("touchend", (event) => {
-    if (!start || !window.matchMedia("(max-width: 760px)").matches) return;
-    const dx = event.changedTouches[0].clientX - start.x;
-    const dy = event.changedTouches[0].clientY - start.y;
-    start = null;
-    if (Math.abs(dy) < 45 || Math.abs(dy) < Math.abs(dx) * 1.2) return;
-    setPanelCollapsed(dy > 0);
-    if (event.target.closest("#panelHandle")) event.preventDefault();
+  let dragged = false;
+  handle.addEventListener("pointerdown", (event) => {
+    if (!window.matchMedia("(max-width: 760px)").matches || !event.isPrimary || event.button !== 0) return;
+    start = { y: event.clientY, height: panel.getBoundingClientRect().height, level: state.sheetLevel };
+    dragged = false;
+    handle.setPointerCapture(event.pointerId);
   });
-  $("#panelHandle").addEventListener("click", () => setPanelCollapsed(!panel.classList.contains("collapsed")));
+  handle.addEventListener("pointermove", (event) => {
+    if (!start) return;
+    const dy = event.clientY - start.y;
+    if (Math.abs(dy) < 6 && !dragged) return;
+    dragged = true;
+    panel.classList.add("dragging");
+    panel.style.height = `${Math.max(panelHeight("collapsed"), Math.min(panelHeight("expanded"), start.height - dy))}px`;
+  });
+  const finishDrag = (event) => {
+    if (!start) return;
+    const dy = event.clientY - start.y;
+    const index = SHEET_LEVELS.indexOf(start.level);
+    let level = SHEET_LEVELS.reduce((nearest, candidate) => Math.abs(panelHeight(candidate) - panel.getBoundingClientRect().height) < Math.abs(panelHeight(nearest) - panel.getBoundingClientRect().height) ? candidate : nearest, start.level);
+    // A short swipe advances one stop; a long drag can cross multiple stops.
+    if (level === start.level && Math.abs(dy) > 35) level = SHEET_LEVELS[Math.max(0, Math.min(2, index + (dy < 0 ? 1 : -1)))];
+    if (event.type === "pointercancel") level = start.level;
+    start = null;
+    panel.classList.remove("dragging");
+    panel.style.height = "";
+    setPanelLevel(level);
+  };
+  handle.addEventListener("pointerup", finishDrag);
+  handle.addEventListener("pointercancel", finishDrag);
+  handle.addEventListener("click", () => {
+    if (dragged) { dragged = false; return; }
+    setPanelLevel(SHEET_LEVELS[(SHEET_LEVELS.indexOf(state.sheetLevel) + 1) % 3]);
+  });
+  handle.addEventListener("keydown", (event) => {
+    const index = SHEET_LEVELS.indexOf(state.sheetLevel);
+    const next = { ArrowUp: Math.min(2, index + 1), ArrowDown: Math.max(0, index - 1), Home: 0, End: 2 }[event.key];
+    if (next === undefined) return;
+    event.preventDefault();
+    setPanelLevel(SHEET_LEVELS[next]);
+  });
 }
 
 function renderCategoryFilters() {
@@ -543,6 +609,11 @@ function bindEvents() {
   $("#mobileSearchForm").addEventListener("submit", submitSearch);
   $$(".filter-chip").forEach((button) => button.addEventListener("click", () => openSelectSheet()));
   $("#locationButton").addEventListener("click", () => locateUser());
+  $("#clearSelectionButton").addEventListener("click", () => {
+    state.selectedMerchants = null;
+    renderMerchantList();
+    $("#merchantList").scrollTop = 0;
+  });
   $$('[data-close-select]').forEach((button) => button.addEventListener("click", () => {
     $("#selectSheet").classList.remove("open");
     $("#selectSheet").setAttribute("aria-hidden", "true");
