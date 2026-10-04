@@ -26,6 +26,21 @@ jobs:
         run: |
           mkdir -p _site
           cp static/index.html static/app.js static/styles.css static/merchant-data.js static/donggu-logo.jpg static/mobile-preview.html _site/
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          version = os.environ["GITHUB_SHA"]
+          index = Path("_site/index.html")
+          content = index.read_text()
+          content = content.replace('href="./styles.css"', f'href="./styles.css?v={version}"')
+          content = content.replace('src="./app.js"', f'src="./app.js?v={version}"')
+          index.write_text(content)
+
+          preview = Path("_site/mobile-preview.html")
+          content = preview.read_text().replace("./index.html?mobile-test=1", f"./index.html?mobile-test=1&amp;v={version}")
+          preview.write_text(content)
+          PY
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
