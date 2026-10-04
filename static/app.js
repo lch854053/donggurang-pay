@@ -677,7 +677,37 @@ function bindEvents() {
   });
 }
 
+function watchDeploymentUpdates() {
+  const currentVersion = document.querySelector('meta[name="app-version"]')?.content;
+  if (!currentVersion) return;
+  let checking = false;
+  const check = async () => {
+    if (document.hidden || checking) return;
+    checking = true;
+    try {
+      const manifest = new URL("./release.json", window.location.href);
+      manifest.searchParams.set("check", Date.now());
+      const response = await fetch(manifest, { cache: "no-store", signal: AbortSignal.timeout(5000) });
+      if (!response.ok) return;
+      const { version } = await response.json();
+      if (!/^[a-f0-9]{40}$/.test(version) || version === currentVersion) return;
+      const latest = new URL(window.location.href);
+      latest.searchParams.set("v", version);
+      window.location.replace(latest.href);
+    } catch {
+      // Keep the current map usable while offline or if the release check fails.
+    } finally {
+      checking = false;
+    }
+  };
+  check();
+  window.addEventListener("pageshow", check);
+  document.addEventListener("visibilitychange", check);
+  setInterval(check, 60000);
+}
+
 async function main() {
+  watchDeploymentUpdates();
   await loadConfig();
   initMap();
   renderCategoryFilters();
