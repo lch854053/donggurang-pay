@@ -1,0 +1,28 @@
+name: Validate public snapshot
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Validate public fields, coordinates and version
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ -n "$BASE_SHA" ]; then
+            git show "$BASE_SHA:static/merchant-data.js" > previous-merchant-data.js
+            node scripts/validate-public-data.mjs previous-merchant-data.js
+          else
+            node scripts/validate-public-data.mjs
+          fi
+      - name: Check frontend syntax
+        run: |
+          node --check static/app.js
+          node --check static/admin.js
+          node --check static/corrections.js

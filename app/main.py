@@ -14,13 +14,14 @@ from pathlib import Path
 from typing import Annotated, Any
 
 import httpx
-from fastapi import Depends, FastAPI, File, Header, HTTPException, Query, UploadFile
+from fastapi import Depends, FastAPI, File, Header, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from openpyxl import load_workbook
 from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.cors import CORSMiddleware
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static"
@@ -70,6 +71,11 @@ class Merchant(BaseModel):
     lng: float
     distance: float | None = None
     business_status: str | None = None
+    categories: list[str] = []
+    nameAliases: list[str] = []
+    phones: list[str] = []
+    phone: str | None = None
+    phoneSource: str | None = None
 
 
 class MerchantList(BaseModel):
@@ -84,6 +90,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Frame-Options"] = "SAMEORIGIN"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "geolocation=(self)"
+        if request.url.path.startswith("/api/admin") or request.url.path in {"/admin", "/admin.html"}:
+            response.headers["Cache-Control"] = "no-store"
         return response
 
 
@@ -96,7 +104,7 @@ def db_connect() -> sqlite3.Connection:
 
 
 def initialize_database() -> None:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    DATA_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
     with db_connect() as connection:
         connection.executescript(
             """
@@ -125,7 +133,7 @@ def initialize_database() -> None:
             """
         )
         count = connection.execute("SELECT COUNT(*) FROM merchants").fetchone()[0]
-        if count == 0 and os.getenv("LOAD_SAMPLE_DATA", "true").lower() == "true":
+        if count == 0 and os.getenv("LOAD_SAMPLE_DATA", "false").lower() == "true":
             now = datetime.now(UTC).isoformat()
             connection.executemany(
                 """INSERT INTO merchants
@@ -133,6 +141,7 @@ def initialize_database() -> None:
                    VALUES (?, ?, ?, ?, ?, ?, ?, '계속사업자', ?)""",
                 [(*merchant, now) for merchant in SAMPLE_MERCHANTS],
             )
+    DB_PATH.chmod(0o600)
 
 
 def normalize_text(value: Any) -> str:
@@ -176,6 +185,7 @@ def parse_values(
     safe_scan_indexes: list[int],
     import_indexes: dict[str, int],
     merchant_numbers: set[str],
+    review: bool = False,
 ) -> dict[str, str] | None:
     item = {column: values[index] if index < len(values) else "" for column, index in import_indexes.items()}
     if not any(item.get(column) for column in IMPORT_COLUMNS):
@@ -185,16 +195,20 @@ def parse_values(
         for pii_name, pattern in PII_PATTERNS.items():
             if pattern.search(value):
                 raise ValueError(f"{row_number}행 {headers[index]}에서 {pii_name} 패턴이 탐지되었습니다.")
-    if "폐업" in item.get("사업자 상태", ""):
+    if not review and "폐업" in item.get("사업자 상태", ""):
         return None
     empty_required = [column for column in IMPORT_COLUMNS if not item[column]]
     if empty_required:
         raise ValueError(f"{row_number}행 필수값이 비어 있습니다: {', '.join(empty_required)}")
+    if any(re.search(r"[<>\x00-\x08\x0b\x0c\x0e-\x1f]", item[column]) for column in IMPORT_COLUMNS):
+        raise ValueError(f"{row_number}행에 HTML 또는 허용되지 않은 제어문자가 있습니다.")
+    if not re.fullmatch(r"[\d\s-]+", item["사업자번호"]):
+        raise ValueError(f"{row_number}행 사업자번호 형식이 올바르지 않습니다.")
     item["사업자번호"] = re.sub(r"\D", "", item["사업자번호"])
     if len(item["사업자번호"]) != 10:
         raise ValueError(f"{row_number}행 사업자번호는 숫자 10자리여야 합니다.")
     merchant_no = item["가맹점번호"]
-    if merchant_no in merchant_numbers:
+    if not review and merchant_no in merchant_numbers:
         raise ValueError(f"{row_number}행 가맹점번호가 중복되었습니다: {merchant_no}")
     merchant_numbers.add(merchant_no)
     return item
@@ -208,11 +222,13 @@ def validate_xlsx_archive(content: bytes) -> None:
                 raise ValueError("압축 해제 크기가 허용 범위를 초과합니다.")
             if any("vbaProject.bin" in entry.filename for entry in entries):
                 raise ValueError("매크로가 포함된 파일은 업로드할 수 없습니다.")
+            if any("externalLinks/" in entry.filename or "embeddings/" in entry.filename for entry in entries):
+                raise ValueError("외부 연결 또는 내장 파일이 포함된 엑셀은 업로드할 수 없습니다.")
     except zipfile.BadZipFile as exc:
         raise ValueError("올바른 .xlsx 파일이 아닙니다.") from exc
 
 
-def parse_excel(content: bytes) -> list[dict[str, str]]:
+def parse_excel(content: bytes, review: bool = False) -> list[dict[str, str]]:
     validate_xlsx_archive(content)
     try:
         workbook = load_workbook(io.BytesIO(content), read_only=True, data_only=False)
@@ -221,6 +237,8 @@ def parse_excel(content: bytes) -> list[dict[str, str]]:
 
     try:
         sheet = workbook.active
+        if sheet.max_row > 100_001 or sheet.max_column > 100:
+            raise ValueError("엑셀 행·열 수가 허용 범위를 초과합니다.")
         rows = sheet.iter_rows(values_only=False)
         try:
             header_cells = next(rows)
@@ -243,7 +261,7 @@ def parse_excel(content: bytes) -> list[dict[str, str]]:
                 cell = cells[index]
                 if cell.data_type == "f":
                     raise ValueError(f"{row_number}행 {headers[index]}에 수식이 포함되어 있습니다.")
-            item = parse_values(values, row_number, headers, safe_scan_indexes, import_indexes, merchant_numbers)
+            item = parse_values(values, row_number, headers, safe_scan_indexes, import_indexes, merchant_numbers, review)
             if item is None:
                 continue
             parsed.append(item)
@@ -257,7 +275,7 @@ def parse_excel(content: bytes) -> list[dict[str, str]]:
         workbook.close()
 
 
-def parse_csv(content: bytes) -> list[dict[str, str]]:
+def parse_csv(content: bytes, review: bool = False) -> list[dict[str, str]]:
     text = None
     for encoding in ("utf-8-sig", "cp949"):
         try:
@@ -281,7 +299,7 @@ def parse_csv(content: bytes) -> list[dict[str, str]]:
     try:
         for row_number, raw_values in enumerate(reader, start=2):
             values = [normalize_text(value) for value in raw_values]
-            item = parse_values(values, row_number, headers, safe_scan_indexes, import_indexes, merchant_numbers)
+            item = parse_values(values, row_number, headers, safe_scan_indexes, import_indexes, merchant_numbers, review)
             if item is None:
                 continue
             parsed.append(item)
@@ -299,7 +317,7 @@ async def require_admin(x_admin_key: Annotated[str | None, Header()] = None) -> 
     if not configured_key:
         raise HTTPException(status_code=503, detail="관리자 업로드 키가 설정되지 않았습니다.")
     import secrets
-    if not x_admin_key or not secrets.compare_digest(x_admin_key, configured_key):
+    if not x_admin_key or not secrets.compare_digest(x_admin_key.encode(), configured_key.encode()):
         raise HTTPException(status_code=401, detail="관리자 인증에 실패했습니다.")
 
 
@@ -318,7 +336,11 @@ async def kakao_geocode(client: httpx.AsyncClient, address: str) -> tuple[float,
         documents = response.json().get("documents", [])
         if not documents:
             return None
-        return float(documents[0]["y"]), float(documents[0]["x"])
+        from app.geocoding import validate_document
+        for document in documents:
+            if validate_document(document, address):
+                return float(document["y"]), float(document["x"])
+        return None
     except (httpx.HTTPError, KeyError, TypeError, ValueError):
         return None
 
@@ -327,7 +349,7 @@ async def attach_coordinates(rows: list[dict[str, str]]) -> list[dict[str, Any]]
     with db_connect() as connection:
         existing = {
             row["address"]: (row["lat"], row["lng"])
-            for row in connection.execute("SELECT address, lat, lng FROM merchants WHERE lat IS NOT NULL")
+            for row in connection.execute("SELECT address, lat, lng FROM merchants WHERE lat BETWEEN 35.08 AND 35.19 AND lng BETWEEN 126.88 AND 127.01")
         }
     semaphore = asyncio.Semaphore(5)
     async with httpx.AsyncClient() as client:
@@ -341,37 +363,6 @@ async def attach_coordinates(rows: list[dict[str, str]]) -> list[dict[str, Any]]
         return await asyncio.gather(*(coordinate(row) for row in rows))
 
 
-def replace_merchants(rows: list[dict[str, Any]], filename: str) -> None:
-    now = datetime.now(UTC).isoformat()
-    with db_connect() as connection:
-        previous_status = {
-            row["business_no"]: (row["business_status"], row["status_checked_at"])
-            for row in connection.execute("SELECT business_no, business_status, status_checked_at FROM merchants")
-        }
-        connection.execute("BEGIN IMMEDIATE")
-        connection.execute("DELETE FROM merchants")
-        connection.executemany(
-            """INSERT INTO merchants
-               (business_no, merchant_no, name, address, category, lat, lng,
-                business_status, status_checked_at, uploaded_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            [
-                (
-                    row["사업자번호"], row["가맹점번호"], row["가맹점명"],
-                    row["사업장주소"], row["가맹점업종명"], row["lat"], row["lng"],
-                     *((row["사업자 상태"], now) if row.get("사업자 상태") else
-                       previous_status.get(row["사업자번호"], (None, None))), now,
-                )
-                for row in rows
-            ],
-        )
-        failed = sum(row["lat"] is None for row in rows)
-        connection.execute(
-            "INSERT INTO upload_logs(filename, row_count, geocode_failed_count, uploaded_at) VALUES (?, ?, ?, ?)",
-            (filename, len(rows), failed, now),
-        )
-
-
 def distance_meters(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
     lat_delta = math.radians(lat2 - lat1)
     lng_delta = math.radians(lng2 - lng1)
@@ -382,14 +373,11 @@ def distance_meters(lat1: float, lng1: float, lat2: float, lng2: float) -> float
     return 6_371_000 * 2 * math.atan2(math.sqrt(value), math.sqrt(1 - value))
 
 
-async def update_business_statuses() -> dict[str, int]:
+async def lookup_business_statuses(numbers: list[str]) -> dict[str, str]:
     service_key = os.getenv("NTS_SERVICE_KEY")
     if not service_key:
-        raise HTTPException(status_code=503, detail="국세청 API 키가 설정되지 않았습니다.")
-    with db_connect() as connection:
-        numbers = [row[0] for row in connection.execute("SELECT DISTINCT business_no FROM merchants")]
-    updated = 0
-    failed = 0
+        return {number: "조회 실패" for number in numbers}
+    statuses = {number: "조회 실패" for number in numbers}
     async with httpx.AsyncClient(timeout=20) as client:
         for offset in range(0, len(numbers), 100):
             batch = numbers[offset:offset + 100]
@@ -401,16 +389,22 @@ async def update_business_statuses() -> dict[str, int]:
                 )
                 response.raise_for_status()
                 results = response.json().get("data", [])
-                now = datetime.now(UTC).isoformat()
-                with db_connect() as connection:
-                    connection.executemany(
-                        "UPDATE merchants SET business_status = ?, status_checked_at = ? WHERE business_no = ?",
-                        [(item.get("b_stt") or "미등록", now, item["b_no"]) for item in results],
-                    )
-                updated += len(results)
-            except (httpx.HTTPError, KeyError, ValueError):
-                failed += len(batch)
-    return {"updated": updated, "failed": failed}
+                for item in results:
+                    if item.get("b_no") in batch:
+                        statuses[item["b_no"]] = {"01": "계속사업자", "02": "휴업자", "03": "폐업자"}.get(item.get("b_stt_cd"), "미등록")
+            except (httpx.HTTPError, KeyError, ValueError, TypeError, AttributeError):
+                pass
+    return statuses
+
+
+async def update_business_statuses() -> dict[str, int]:
+    with db_connect() as connection:
+        numbers = [row[0] for row in connection.execute("SELECT DISTINCT business_no FROM merchants WHERE business_no != ''")]
+    statuses = await lookup_business_statuses(numbers)
+    with db_connect() as connection:
+        connection.executemany("UPDATE merchants SET business_status=?, status_checked_at=? WHERE business_no=?",
+                               [(status, datetime.now(UTC).isoformat(), number) for number, status in statuses.items() if status != "조회 실패"])
+    return {"updated": sum(v != "조회 실패" for v in statuses.values()), "failed": sum(v == "조회 실패" for v in statuses.values())}
 
 
 async def weekly_status_worker() -> None:
@@ -434,8 +428,12 @@ async def weekly_status_worker() -> None:
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     initialize_database()
-    task = asyncio.create_task(weekly_status_worker())
+    from app.admin import initialize_admin_database
+    initialize_admin_database()
+    task = asyncio.create_task(weekly_status_worker()) if os.getenv("ENABLE_WEEKLY_STATUS_CHECK", "false").lower() == "true" else None
     yield
+    if task is None:
+        return
     task.cancel()
     try:
         await task
@@ -450,6 +448,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(CORSMiddleware, allow_origins=[origin.strip() for origin in os.getenv("PUBLIC_ORIGINS", "https://lch854053.github.io").split(",")],
+                   allow_methods=["POST"], allow_headers=["Content-Type"], allow_credentials=False)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
@@ -476,6 +476,14 @@ async def javascript() -> FileResponse:
 @app.get("/merchant-data.js", include_in_schema=False)
 async def merchant_data() -> FileResponse:
     return FileResponse(STATIC_DIR / "merchant-data.js", media_type="text/javascript")
+
+
+@app.get("/merchant-phones.js", include_in_schema=False)
+@app.get("/merchant-reviewed-phones.js", include_in_schema=False)
+@app.get("/service-config.js", include_in_schema=False)
+@app.get("/corrections.js", include_in_schema=False)
+async def auxiliary_javascript(request: Request) -> FileResponse:
+    return FileResponse(STATIC_DIR / request.url.path.lstrip("/"), media_type="text/javascript")
 
 
 @app.get("/donggu-logo.jpg", include_in_schema=False)
@@ -508,9 +516,7 @@ async def health() -> dict[str, str]:
 async def public_config() -> dict[str, Any]:
     vworld_key = os.getenv("VWORLD_API_KEY", "")
     with db_connect() as connection:
-        has_uploaded_map = bool(connection.execute(
-            "SELECT EXISTS(SELECT 1 FROM upload_logs) AND EXISTS(SELECT 1 FROM merchants WHERE lat IS NOT NULL)"
-        ).fetchone()[0])
+        has_uploaded_map = bool(connection.execute("SELECT EXISTS(SELECT 1 FROM change_logs) AND EXISTS(SELECT 1 FROM merchants WHERE active=1)").fetchone()[0])
     return {
         "tile_provider": "vworld" if vworld_key else "vworld_public",
         "vworld_key": vworld_key,
@@ -537,7 +543,7 @@ async def list_merchants(
     bounds = (south, west, north, east)
     if any(value is not None for value in bounds) and any(value is None for value in bounds):
         raise HTTPException(status_code=422, detail="south, west, north, east는 함께 입력해야 합니다.")
-    clauses = ["lat IS NOT NULL", "lng IS NOT NULL", "COALESCE(business_status, '') NOT LIKE '%폐업%'"]
+    clauses = ["lat IS NOT NULL", "lng IS NOT NULL", "active = 1"]
     parameters: list[Any] = []
     if q:
         clauses.append("(name LIKE ? ESCAPE '\\' OR address LIKE ? ESCAPE '\\' OR category LIKE ? ESCAPE '\\')")
@@ -564,10 +570,8 @@ async def list_merchants(
         distance = distance_meters(lat, lng, row["lat"], row["lng"]) if lat is not None and lng is not None else None
         if distance is not None and distance > radius:
             continue
-        items.append(Merchant(
-            id=row["id"], name=row["name"], address=row["address"], category=row["category"],
-            lat=row["lat"], lng=row["lng"], distance=distance, business_status=row["business_status"],
-        ))
+        from app.admin import record_public
+        items.append(Merchant(**record_public(row), distance=distance))
     if lat is not None and lng is not None:
         items.sort(key=lambda item: item.distance if item.distance is not None else math.inf)
     return MerchantList(items=items, total=len(items))
@@ -577,7 +581,7 @@ async def list_merchants(
 async def categories() -> dict[str, list[str]]:
     with db_connect() as connection:
         values = [row[0] for row in connection.execute(
-            "SELECT DISTINCT category FROM merchants WHERE COALESCE(business_status, '') NOT LIKE '%폐업%' ORDER BY category"
+            "SELECT DISTINCT category FROM merchants WHERE active=1 ORDER BY category"
         )]
     return {"items": values}
 
@@ -593,31 +597,14 @@ async def geocode(query: str = Query(..., min_length=2, max_length=200)) -> dict
 
 @app.post("/api/admin/upload", dependencies=[Depends(require_admin)])
 async def upload_merchants(file: Annotated[UploadFile, File(...)]) -> dict[str, Any]:
-    filename = Path(file.filename or "").name
-    extension = Path(filename).suffix.lower()
-    if extension not in {".xlsx", ".csv"}:
-        raise HTTPException(status_code=400, detail=".xlsx 또는 .csv 파일만 업로드할 수 있습니다.")
-    content = await file.read(MAX_UPLOAD_BYTES + 1)
     await file.close()
-    if len(content) > MAX_UPLOAD_BYTES:
-        raise HTTPException(status_code=413, detail="파일 크기는 10MB를 초과할 수 없습니다.")
-    try:
-        parser = parse_excel if extension == ".xlsx" else parse_csv
-        rows = await run_in_threadpool(parser, content)
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
-    coordinated_rows = await attach_coordinates(rows)
-    await run_in_threadpool(replace_merchants, coordinated_rows, filename)
-    failed = sum(row["lat"] is None for row in coordinated_rows)
-    return {
-        "message": "가맹점 데이터가 교체되었습니다.",
-        "imported": len(coordinated_rows),
-        "geocoded": len(coordinated_rows) - failed,
-        "geocode_failed": failed,
-        "discarded_columns": sorted(DISCARDED_PII_COLUMNS),
-    }
+    raise HTTPException(status_code=410, detail="전체 교체 기능은 종료되었습니다. /api/admin/batches에서 비교 후 승인하세요.")
 
 
 @app.post("/api/admin/check-business-status", dependencies=[Depends(require_admin)])
 async def check_business_status() -> dict[str, int]:
     return await update_business_statuses()
+
+
+from app.admin import router as admin_router
+app.include_router(admin_router)

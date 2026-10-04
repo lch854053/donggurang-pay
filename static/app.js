@@ -93,7 +93,7 @@ let merchantRequestVersion = 0;
 
 function loadStaticMerchants() {
   if (MOBILE_SAMPLE_MODE) return Promise.resolve(SAMPLE_MERCHANTS);
-  const withPhones = (merchants) => merchants.map((merchant) => ({
+  const withPhones = (merchants) => merchants.map((merchant) => Object.hasOwn(merchant, "phones") ? merchant : ({
     ...merchant, ...(window.DONGGURANG_PHONES?.[merchant.id] || {}),
     ...(window.DONGGURANG_REVIEWED_PHONES?.[merchant.id] || {})
   }));
@@ -335,6 +335,11 @@ function renderMerchantList() {
     if (index >= listLimit) return;
 
     const fragment = template.content.cloneNode(true);
+    const correctionButton = fragment.querySelector(".correction-button");
+    if (correctionButton) {
+      correctionButton.dataset.merchantId = merchant.id;
+      correctionButton.hidden = MOBILE_SAMPLE_MODE;
+    }
     fragment.querySelector(".merchant-icon").innerHTML = markerIcon(merchant.group);
     fragment.querySelector("strong").textContent = merchant.name;
     fragment.querySelector(".category").textContent = merchant.categories.join(" · ") + (hasCoordinates(merchant) ? "" : " · 위치 확인 필요");
