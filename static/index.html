@@ -58,6 +58,7 @@
           <label class="search-box">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg>
             <input id="searchInput" type="search" autocomplete="off" placeholder="가맹점명 또는 주소를 입력하세요" aria-label="가맹점명 또는 주소">
+            <button class="search-clear" type="button" data-clear-search="searchInput" aria-label="검색어 지우기" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
             <button class="search-submit" type="submit" aria-label="검색">검색</button>
           </label>
           <p class="search-hint" id="searchHint">상호명, 주소, 업종을 함께 검색합니다.</p>
@@ -85,6 +86,7 @@
         <div class="map-topbar">
           <form class="mobile-search-form" id="mobileSearchForm" role="search">
             <input id="mobileSearchInput" type="search" autocomplete="off" placeholder="가맹점명 · 주소 검색" aria-label="가맹점명 또는 주소">
+            <button class="search-clear" type="button" data-clear-search="mobileSearchInput" aria-label="검색어 지우기" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
             <button type="submit" aria-label="검색"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg></button>
           </form>
           <div class="category-filters mobile-category-filters" role="group" aria-label="업종 선택"></div>
