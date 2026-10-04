@@ -33,6 +33,7 @@ jobs:
           version = os.environ["GITHUB_SHA"]
           index = Path("_site/index.html")
           content = index.read_text()
+          content = content.replace('</head>', f'<meta name="app-version" content="{version}">\n</head>')
           content = content.replace('href="./styles.css"', f'href="./styles.css?v={version}"')
           content = content.replace('src="./app.js"', f'src="./app.js?v={version}"')
           index.write_text(content)
@@ -40,6 +41,7 @@ jobs:
           preview = Path("_site/mobile-preview.html")
           content = preview.read_text().replace("./index.html?mobile-test=1", f"./index.html?mobile-test=1&amp;v={version}")
           preview.write_text(content)
+          Path("_site/release.json").write_text('{"version": "' + version + '"}')
           PY
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
