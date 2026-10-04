@@ -16,6 +16,7 @@ const SAMPLE_MERCHANTS = [
 const MOBILE_SAMPLE_MODE = new URLSearchParams(window.location.search).has("mobile-test");
 const CATEGORY_GROUP_ORDER = ["음식점·카페", "식품·마트", "패션·뷰티", "의료·건강", "교육·문화", "생활·주거", "스포츠·여가", "기타"];
 const CATEGORY_MARKER_ICONS = {
+  all: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
   "음식점·카페": '<path d="M4 3v7a3 3 0 0 0 6 0V3M7 3v18M17 3c-2 3-2 6 0 8h2V3h-2Zm2 8v10"/>',
   "식품·마트": '<path d="M3 9h18l-2 11H5L3 9Zm4 0 5-6 5 6M9 13v3m6-3v3"/>',
   "패션·뷰티": '<path d="M10 5a2 2 0 1 1 4 0c0 1-2 2-2 4v1l9 6v2H3v-2l9-6"/>',
@@ -446,12 +447,43 @@ function bindPanelGestures() {
   $("#panelHandle").addEventListener("click", () => setPanelCollapsed(!panel.classList.contains("collapsed")));
 }
 
-function openSelectSheet(type) {
-  const isCategory = type === "category";
-  const options = isCategory
-    ? ["all", ...CATEGORY_GROUP_ORDER].map((value) => ({ value, label: value === "all" ? "전체 업종" : value }))
-    : [{ value: 500, label: "500m 이내" }, { value: 1000, label: "1km 이내" }, { value: 3000, label: "3km 이내" }, { value: 5000, label: "5km 이내" }];
-  $("#selectTitle").textContent = isCategory ? "업종 선택" : "검색 거리 선택";
+function renderCategoryFilters() {
+  $$(".category-filters").forEach((container) => {
+    container.replaceChildren();
+    ["all", ...CATEGORY_GROUP_ORDER].forEach((category) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "category-chip";
+      button.dataset.category = category;
+      button.innerHTML = `${markerIcon(category)}<span>${category === "all" ? "전체" : category}</span>`;
+      button.addEventListener("click", () => selectCategory(category));
+      container.appendChild(button);
+    });
+  });
+  updateCategoryFilters();
+}
+
+function updateCategoryFilters() {
+  $$(".category-chip").forEach((button) => {
+    const active = button.dataset.category === state.category;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+}
+
+function selectCategory(category) {
+  state.category = category;
+  updateCategoryFilters();
+  // Keep the search term when narrowing results by industry.
+  if (window.matchMedia("(max-width: 760px)").matches) {
+    setActiveTab("search");
+    fetchMerchants().then(showFilteredMerchantsOnMap);
+  } else applyClientFilters();
+}
+
+function openSelectSheet() {
+  const options = [{ value: 500, label: "500m 이내" }, { value: 1000, label: "1km 이내" }, { value: 3000, label: "3km 이내" }, { value: 5000, label: "5km 이내" }];
+  $("#selectTitle").textContent = "검색 거리 선택";
   const container = $("#selectOptions");
   container.replaceChildren();
   options.forEach((option) => {
@@ -459,27 +491,13 @@ function openSelectSheet(type) {
     button.type = "button";
     button.className = "select-option";
     button.textContent = option.label;
-    const current = isCategory ? state.category : state.radius;
-    button.classList.toggle("active", String(current) === String(option.value));
+    button.classList.toggle("active", state.radius === option.value);
     button.addEventListener("click", () => {
-      if (isCategory) {
-        state.category = option.value;
-        $("#categoryLabel").textContent = option.label;
-        $("#mobileCategoryButton").classList.toggle("active", option.value !== "all");
-        $("#mobileCategoryButton").setAttribute("aria-label", `업종 선택: ${option.label}`);
-      } else {
-        state.radius = Number(option.value);
-        $("#radiusLabel").textContent = option.label;
-      }
+      state.radius = option.value;
+      $("#radiusLabel").textContent = option.label;
       $("#selectSheet").classList.remove("open");
       $("#selectSheet").setAttribute("aria-hidden", "true");
-      if (isCategory && window.matchMedia("(max-width: 760px)").matches) {
-        state.query = "";
-        $("#searchInput").value = "";
-        $("#mobileSearchInput").value = "";
-        setActiveTab("search");
-        fetchMerchants().then(showFilteredMerchantsOnMap);
-      } else applyClientFilters();
+      applyClientFilters();
     });
     container.appendChild(button);
   });
@@ -523,8 +541,7 @@ function bindEvents() {
   };
   $("#searchForm").addEventListener("submit", submitSearch);
   $("#mobileSearchForm").addEventListener("submit", submitSearch);
-  $$(".filter-chip").forEach((button) => button.addEventListener("click", () => openSelectSheet(button.dataset.filter)));
-  $("#mobileCategoryButton").addEventListener("click", () => openSelectSheet("category"));
+  $$(".filter-chip").forEach((button) => button.addEventListener("click", () => openSelectSheet()));
   $("#locationButton").addEventListener("click", () => locateUser());
   $$('[data-close-select]').forEach((button) => button.addEventListener("click", () => {
     $("#selectSheet").classList.remove("open");
@@ -546,6 +563,7 @@ function bindEvents() {
 async function main() {
   await loadConfig();
   initMap();
+  renderCategoryFilters();
   bindEvents();
   // Let the browser paint and request the base tiles before parsing merchant data.
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 0))));
