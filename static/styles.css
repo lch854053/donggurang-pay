@@ -41,29 +41,9 @@ button { color: inherit; }
 
 .search-panel { z-index: 500; display: flex; flex-direction: column; min-height: 0; padding: 18px 24px 0; background: var(--paper); box-shadow: 8px 0 30px rgba(53,36,93,.08); }
 .panel-handle { display: none; }
-.brand-card { position: relative; flex: 0 0 170px; min-height: 170px; overflow: hidden; margin-bottom: 20px; border-radius: 25px; background: linear-gradient(150deg, #b9f2f1 0%, #c9e5f5 46%, #ffd69d 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.6), 0 10px 28px rgba(34,91,132,.15); isolation: isolate; }
-.brand-card::before { position: absolute; z-index: -1; top: 17px; right: 22px; width: 54px; height: 54px; border-radius: 50%; background: radial-gradient(circle at 34% 32%, #fff 0 8%, #8bc8ed 25%, #2589ca 72%); box-shadow: 0 0 30px rgba(255,255,255,.8); content: ""; }
-.brand-card-copy { position: relative; z-index: 5; padding: 23px 25px; }
-.brand-card-copy p { margin: 0 0 4px; color: #55457d; font-size: 11px; font-weight: 800; letter-spacing: .03em; }
-.brand-card-copy h1 { display: flex; align-items: baseline; gap: 5px; margin: 0; line-height: .95; letter-spacing: -.09em; transform: rotate(-2deg); transform-origin: left; }
-.brand-card-copy h1 span { color: var(--ink); font-size: 35px; font-weight: 950; text-shadow: 0 2px 0 rgba(255,255,255,.75); }
-.brand-card-copy h1 strong { color: var(--accent); font-size: 40px; font-weight: 950; text-shadow: 0 2px 0 rgba(255,255,255,.8); }
-.spark { position: absolute; z-index: 5; color: white; text-shadow: 0 2px 7px rgba(91,67,140,.2); }
-.spark-one { top: 13px; left: 14px; font-size: 11px; }
-.spark-two { top: 72px; right: 78px; font-size: 15px; }
-.mini-skyline { position: absolute; z-index: 1; right: 9px; bottom: 48px; display: flex; align-items: end; gap: 2px; opacity: .76; }
-.mini-skyline i { width: 12px; height: 33px; background: #765b9d; box-shadow: inset 3px 0 rgba(255,255,255,.18); }
-.mini-skyline i:nth-child(2) { height: 46px; background: #2589ca; }
-.mini-skyline i:nth-child(3) { height: 28px; background: #617aaa; }
-.mini-skyline i:nth-child(4) { height: 53px; background: #504173; }
-.mini-skyline i:nth-child(5) { height: 38px; background: #ef8b68; }
-.rainbow { position: absolute; z-index: 2; right: 100px; bottom: 27px; width: 77px; height: 45px; border: 7px solid #ffed70; border-bottom: 0; border-radius: 80px 80px 0 0; box-shadow: inset 0 0 0 6px #278dca, inset 0 0 0 12px #79d9e7; transform: rotate(-6deg); }
-.hill { position: absolute; z-index: 3; bottom: -67px; border-radius: 50% 50% 0 0; }
-.hill-back { right: -27px; width: 270px; height: 142px; background: #8ed45b; transform: rotate(-4deg); }
-.hill-front { bottom: -79px; left: -42px; width: 300px; height: 145px; background: linear-gradient(135deg, #62bc49, #258947); transform: rotate(6deg); }
-.flower { position: absolute; z-index: 4; color: #fff08d; font-size: 28px; text-shadow: 0 2px 0 #e78430; }
-.flower-one { right: 47px; bottom: 18px; transform: rotate(12deg); }
-.flower-two { right: 79px; bottom: 5px; color: #91cbed; font-size: 21px; transform: rotate(-13deg); }
+.brand-card { position: relative; flex: 0 0 200px; height: 200px; min-height: 200px; overflow: hidden; margin-bottom: 20px; border-radius: 25px; background: #c5e796 url("./donggu-pay-card.png") center / cover; box-shadow: 0 10px 28px rgba(34,91,132,.15); isolation: isolate; }
+.brand-card::before { position: absolute; z-index: -1; inset: -20px; background: inherit; filter: blur(12px); content: ""; }
+.brand-card img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .search-box { display: flex; align-items: center; height: 54px; padding-left: 15px; border: 1.5px solid #ccd7d1; border-radius: 15px; background: white; transition: border .2s, box-shadow .2s; }
 .search-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(8,116,190,.1); }
 .search-box svg { width: 20px; fill: none; stroke: var(--accent); stroke-linecap: round; stroke-width: 2; }
@@ -114,7 +94,8 @@ button { color: inherit; }
 #map { width: 100%; height: 100%; }
 .map-topbar { position: absolute; z-index: 600; top: 20px; right: 0; left: 0; display: flex; min-width: 0; flex-direction: column; pointer-events: none; }
 .mobile-search-form { display: none; }
-.map-topbar .category-filters { padding: 2px 20px 8px; pointer-events: auto; }
+.map-topbar .category-filters { padding: 2px 20px 8px; pointer-events: auto; scrollbar-width: none; -ms-overflow-style: none; }
+.map-topbar .category-filters::-webkit-scrollbar { display: none; }
 .map-topbar .category-chip { box-shadow: 0 2px 8px rgba(22,52,45,.15); }
 .location-button { position: absolute; z-index: 600; bottom: 22px; left: 20px; display: grid; place-items: center; width: 46px; height: 46px; border: 0; border-radius: 15px; background: white; box-shadow: var(--shadow); cursor: pointer; }
 .location-button svg { width: 21px; fill: none; stroke: var(--accent); stroke-linecap: round; stroke-width: 1.8; }
@@ -185,7 +166,7 @@ button { color: inherit; }
 @media (min-width: 761px) and (max-width: 1050px) {
   .workspace { grid-template-columns: 375px 1fr; }
   .search-panel { padding-right: 22px; padding-left: 22px; }
-  .brand-card { flex-basis: 155px; min-height: 155px; }
+  .brand-card { flex-basis: 180px; height: 180px; min-height: 180px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
