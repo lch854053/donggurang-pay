@@ -1,0 +1,967 @@
+{
+  "beforeCount": 3797,
+  "afterCount": 3762,
+  "removedCount": 35,
+  "merges": [
+    {
+      "keptId": 90,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 90,
+          "name": "이마트24 광주유정점",
+          "address": "광주 동구 무등로306번길 35-1 (계림동)",
+          "category": "편 의 점",
+          "locality": "계림동",
+          "lat": 35.1592363410504,
+          "lng": 126.914794901342,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 무등로306번길 35-1",
+          "approximate": false
+        },
+        {
+          "id": 794,
+          "name": "이마트24광주유정점",
+          "address": "광주 동구 무등로306번길 35-1 (계림동)",
+          "category": "종합용역",
+          "locality": "계림동",
+          "lat": 35.1592363410504,
+          "lng": 126.914794901342,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 무등로306번길 35-1",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 127,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 127,
+          "name": "디피오레",
+          "address": "광주 동구 남문로753번길 20 상가 B동 110호 (학동)",
+          "category": "화   원",
+          "locality": "학동",
+          "lat": 35.1363662640727,
+          "lng": 126.92269450524,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 남문로753번길 20",
+          "approximate": false
+        },
+        {
+          "id": 130,
+          "name": "디피오레",
+          "address": "광주 동구 남문로753번길 20 상가 B동 110호 (학동)",
+          "category": "서양음식",
+          "locality": "학동",
+          "lat": 35.1363662640727,
+          "lng": 126.92269450524,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 남문로753번길 20",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 178,
+      "reason": "동일 사찰 주소에 사찰명만 추가 기재",
+      "records": [
+        {
+          "id": 178,
+          "name": "대한불교조계종증심사",
+          "address": "광주 동구 증심사길 177 (운림동)",
+          "category": "기타숙박업",
+          "locality": "운림동",
+          "lat": 35.1288436266012,
+          "lng": 126.970090683904,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 증심사길 177",
+          "approximate": false
+        },
+        {
+          "id": 1004,
+          "name": "대한불교조계종증심사",
+          "address": "광주 동구 증심사길 177 (운림동)",
+          "category": "기타숙박업",
+          "locality": "운림동",
+          "lat": 35.1288436266012,
+          "lng": 126.970090683904,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 증심사길 177",
+          "approximate": false
+        },
+        {
+          "id": 1005,
+          "name": "대한불교조계종증심사",
+          "address": "광주 동구 증심사길 177 (운림동)",
+          "category": "기타숙박업",
+          "locality": "운림동",
+          "lat": 35.1288436266012,
+          "lng": 126.970090683904,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 증심사길 177",
+          "approximate": false
+        },
+        {
+          "id": 2099,
+          "name": "대한불교조계종증심사",
+          "address": "광주 동구 증심사길 177 (운림동)",
+          "category": "기타대인서비스",
+          "locality": "운림동",
+          "lat": 35.1288436266012,
+          "lng": 126.970090683904,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 증심사길 177",
+          "approximate": false
+        },
+        {
+          "id": 2222,
+          "name": "대한불교조계종증심사",
+          "address": "광주 동구 증심사길 177 증심사 (운림동)",
+          "category": "기타대인서비스",
+          "locality": "운림동",
+          "lat": 35.1288436266012,
+          "lng": 126.970090683904,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 증심사길 177",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 188,
+      "reason": "동일 주소 1층의 괄호·쉼표 위치 차이",
+      "records": [
+        {
+          "id": 188,
+          "name": "더치앤더치",
+          "address": "광주 동구 예술길 34 ,1층 (대의동)",
+          "category": "화 장 품",
+          "locality": "대의동",
+          "lat": 35.1490853705725,
+          "lng": 126.919357277499,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 예술길 34",
+          "approximate": false
+        },
+        {
+          "id": 2138,
+          "name": "더치앤더치",
+          "address": "광주 동구 예술길 34 (대의동,1층)",
+          "category": "서양음식",
+          "locality": "대의동",
+          "lat": 35.1490853705725,
+          "lng": 126.919357277499,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 예술길 34",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 281,
+      "reason": "동일 주소 2층의 공백·쉼표 차이",
+      "records": [
+        {
+          "id": 281,
+          "name": "아이멘토학원",
+          "address": "광주 동구 밤실로30번길 6 ,2층 (지산동)",
+          "category": "보습학원",
+          "locality": "지산동",
+          "lat": 35.1500508858614,
+          "lng": 126.937650304724,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 밤실로30번길 6",
+          "approximate": false
+        },
+        {
+          "id": 302,
+          "name": "아이멘토학원",
+          "address": "광주 동구 밤실로30번길 6 , 2층 (지산동)",
+          "category": "보습학원",
+          "locality": "지산동",
+          "lat": 35.1500508858614,
+          "lng": 126.937650304724,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 밤실로30번길 6",
+          "approximate": false
+        },
+        {
+          "id": 2225,
+          "name": "아이멘토학원",
+          "address": "광주 동구 밤실로30번길 6 2층 (지산동)",
+          "category": "학원(회원제형태)",
+          "locality": "지산동",
+          "lat": 35.1500508858614,
+          "lng": 126.937650304724,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 밤실로30번길 6",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 364,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 364,
+          "name": "리본(RE: BORN)",
+          "address": "광주 동구 남문로 672 1층 (학동)",
+          "category": "미 용 원",
+          "locality": "학동",
+          "lat": 35.1307634444367,
+          "lng": 126.929588007758,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 남문로 672",
+          "approximate": false
+        },
+        {
+          "id": 783,
+          "name": "리본(RE: BORN)",
+          "address": "광주 동구 남문로 672 1층 (학동)",
+          "category": "미용 재료",
+          "locality": "학동",
+          "lat": 35.1307634444367,
+          "lng": 126.929588007758,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 남문로 672",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 434,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 434,
+          "name": "진도 섬마을",
+          "address": "광주 동구 양림로 123 (학동)",
+          "category": "농축수산품",
+          "locality": "학동",
+          "lat": 35.1402856870896,
+          "lng": 126.921198680624,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 양림로 123",
+          "approximate": false
+        },
+        {
+          "id": 2246,
+          "name": "진도섬마을",
+          "address": "광주 동구 양림로 123 (학동)",
+          "category": "일식회집",
+          "locality": "학동",
+          "lat": 35.1402856870896,
+          "lng": 126.921198680624,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 양림로 123",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 463,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 463,
+          "name": "엘프(ELF)",
+          "address": "광주 동구 지호로 155 (지산동)",
+          "category": "서양음식",
+          "locality": "지산동",
+          "lat": 35.1496867291369,
+          "lng": 126.945087236017,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 지호로 155",
+          "approximate": false
+        },
+        {
+          "id": 1350,
+          "name": "엘프(ELF)",
+          "address": "광주 동구 지호로 155 (지산동)",
+          "category": "서양음식",
+          "locality": "지산동",
+          "lat": 35.1496867291369,
+          "lng": 126.945087236017,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 지호로 155",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 487,
+      "reason": "동일 주소 지하1층의 괄호 위치 차이",
+      "records": [
+        {
+          "id": 487,
+          "name": "주식회사 로제타트래블",
+          "address": "광주 동구 서석로 5 (불로동,지하1층)",
+          "category": "관광여행",
+          "locality": "불로동",
+          "lat": 35.1451461517079,
+          "lng": 126.91449299678,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 서석로 5",
+          "approximate": false
+        },
+        {
+          "id": 2115,
+          "name": "주식회사 로제타트래블",
+          "address": "광주 동구 서석로 5 (불로동)지하1층",
+          "category": "관광여행",
+          "locality": "불로동",
+          "lat": 35.1451461517079,
+          "lng": 126.91449299678,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 서석로 5",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 966,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 966,
+          "name": "위니아24크린샵광주학동점&공간카페",
+          "address": "광주 동구 양림로119번길 15-1 1층 (학동)",
+          "category": "세탁소",
+          "locality": "학동",
+          "lat": 35.1410725615756,
+          "lng": 126.919802242931,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 양림로119번길 15-1",
+          "approximate": false
+        },
+        {
+          "id": 967,
+          "name": "위니아24크린샵광주학동점&공간카페",
+          "address": "광주 동구 양림로119번길 15-1 1층(학동)",
+          "category": "서양음식",
+          "locality": "학동",
+          "lat": 35.1410725615756,
+          "lng": 126.919802242931,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 양림로119번길 15-1",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 1055,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 1055,
+          "name": "주식회사카카오",
+          "address": "광주 동구 의재로 43 (학동)",
+          "category": "슈퍼 마켓",
+          "locality": "학동",
+          "lat": 35.1327302772885,
+          "lng": 126.932541421217,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 의재로 43",
+          "approximate": false
+        },
+        {
+          "id": 2265,
+          "name": "주식회사 카카오",
+          "address": "광주 동구 의재로 43 (학동)",
+          "category": "슈퍼 마켓",
+          "locality": "학동",
+          "lat": 35.1327302772885,
+          "lng": 126.932541421217,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 의재로 43",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 1090,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 1090,
+          "name": "집어가 광주소태점",
+          "address": "광주 동구 남문로 589 상가403동 1층 103호 (용산동, 무등산골드클래스2차)",
+          "category": "기타음료식품",
+          "locality": "용산동",
+          "lat": 35.1235928821628,
+          "lng": 126.931583521682,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 남문로 589",
+          "approximate": false
+        },
+        {
+          "id": 1146,
+          "name": "집어가 광주소태점",
+          "address": "광주 동구 남문로 589 상가 403동 1층 103호 (용산동, 무등산골드클래스2차)",
+          "category": "농축수산품",
+          "locality": "용산동",
+          "lat": 35.1235928821628,
+          "lng": 126.931583521682,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 남문로 589",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 1194,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 1194,
+          "name": "하이오커피 광주학동점",
+          "address": "광주 동구 남문로 672 1층 (학동)",
+          "category": "서양음식",
+          "locality": "학동",
+          "lat": 35.1307634444367,
+          "lng": 126.929588007758,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 남문로 672",
+          "approximate": false
+        },
+        {
+          "id": 2428,
+          "name": "하이오커피 광주학동점",
+          "address": "광주 동구 남문로 672 1층 (학동)",
+          "category": "서양음식",
+          "locality": "학동",
+          "lat": 35.1307634444367,
+          "lng": 126.929588007758,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 남문로 672",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 1241,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 1241,
+          "name": "파머스영어3관더조은수학과학학원",
+          "address": "광주 동구 동계로 61 2층 (계림동)",
+          "category": "보습학원",
+          "locality": "계림동",
+          "lat": 35.1571777249568,
+          "lng": 126.923434426267,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 동계로 61",
+          "approximate": false
+        },
+        {
+          "id": 1245,
+          "name": "파머스영어3관더조은수학과학학원",
+          "address": "광주 동구 동계로 61 2층 (계림동)",
+          "category": "보습학원",
+          "locality": "계림동",
+          "lat": 35.1571777249568,
+          "lng": 126.923434426267,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 동계로 61",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 1411,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 1411,
+          "name": "주식회사 유클리드",
+          "address": "광주 동구 장동로 23-45 2층 (장동)",
+          "category": "보습학원",
+          "locality": "장동",
+          "lat": 35.1488100905819,
+          "lng": 126.924527615461,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 장동로 23-45",
+          "approximate": false
+        },
+        {
+          "id": 1420,
+          "name": "주식회사 유클리드",
+          "address": "광주 동구 장동로 23-45 2층 (장동)",
+          "category": "보습학원",
+          "locality": "장동",
+          "lat": 35.1488100905819,
+          "lng": 126.924527615461,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 장동로 23-45",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 1774,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 1774,
+          "name": "대우회관",
+          "address": "광주 동구 의재로26번길 3 (학동)",
+          "category": "일반한식",
+          "locality": "학동",
+          "lat": 35.132436485361,
+          "lng": 126.930559786308,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 의재로26번길 3",
+          "approximate": false
+        },
+        {
+          "id": 2016,
+          "name": "대우회관",
+          "address": "광주 동구 의재로26번길 3 (학동)",
+          "category": "정 육 점",
+          "locality": "학동",
+          "lat": 35.132436485361,
+          "lng": 126.930559786308,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 의재로26번길 3",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 1858,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 1858,
+          "name": "주식회사아모스금남점",
+          "address": "광주 동구 금남로 161-6 (금남로5가)",
+          "category": "화 장 품",
+          "locality": "금남로5가",
+          "lat": 35.1531253586369,
+          "lng": 126.911727120884,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 금남로 161-6",
+          "approximate": false
+        },
+        {
+          "id": 2210,
+          "name": "주식회사아모스금남점",
+          "address": "광주 동구 금남로 161-6 (금남로5가)",
+          "category": "화 장 품",
+          "locality": "금남로5가",
+          "lat": 35.1531253586369,
+          "lng": 126.911727120884,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 금남로 161-6",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 1890,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 1890,
+          "name": "전북식당",
+          "address": "광주 동구 증심사길 28-16 (운림동)",
+          "category": "일반한식",
+          "locality": "운림동",
+          "lat": 35.1332667861326,
+          "lng": 126.955387934841,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 증심사길 28-16",
+          "approximate": false
+        },
+        {
+          "id": 2156,
+          "name": "전북식당",
+          "address": "광주 동구 증심사길 28-16 (운림동)",
+          "category": "일반한식",
+          "locality": "운림동",
+          "lat": 35.1332667861326,
+          "lng": 126.955387934841,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 증심사길 28-16",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 1959,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 1959,
+          "name": "일호상사",
+          "address": "광주 동구 양림로 109 (학동)",
+          "category": "농축수산품",
+          "locality": "학동",
+          "lat": 35.1396499911713,
+          "lng": 126.920013770992,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 양림로 109",
+          "approximate": false
+        },
+        {
+          "id": 2341,
+          "name": "일호상사",
+          "address": "광주 동구 양림로 109 (학동)",
+          "category": "농축수산품",
+          "locality": "학동",
+          "lat": 35.1396499911713,
+          "lng": 126.920013770992,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 양림로 109",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 2538,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 2538,
+          "name": "순창상회",
+          "address": "광주 동구 제봉로184번길 10 (대인동)",
+          "category": "농축수산품",
+          "locality": "대인동",
+          "lat": 35.1532079135603,
+          "lng": 126.917999027732,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 제봉로184번길 10",
+          "approximate": false
+        },
+        {
+          "id": 3157,
+          "name": "순창상회",
+          "address": "광주 동구 제봉로184번길 10 (대인동)",
+          "category": "농축수산품",
+          "locality": "대인동",
+          "lat": 35.1532079135603,
+          "lng": 126.917999027732,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 제봉로184번길 10",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 2569,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 2569,
+          "name": "무등세차장",
+          "address": "광주 동구 남문로 766 (학동)",
+          "category": "세 차 장",
+          "locality": "학동",
+          "lat": 35.1381007859676,
+          "lng": 126.924601252534,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 남문로 766",
+          "approximate": false
+        },
+        {
+          "id": 2574,
+          "name": "무등세차장",
+          "address": "광주 동구 남문로 766 (학동)",
+          "category": "세 차 장",
+          "locality": "학동",
+          "lat": 35.1381007859676,
+          "lng": 126.924601252534,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 남문로 766",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 2622,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 2622,
+          "name": "광주동구지역자활센터",
+          "address": "광주 동구 금남로 231 ,2층 (금남로2가,금남빌딩)",
+          "category": "문화취미기타",
+          "locality": "금남로2가",
+          "lat": 35.1490440067958,
+          "lng": 126.917628214769,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 금남로 231",
+          "approximate": false
+        },
+        {
+          "id": 2623,
+          "name": "광주동구지역자활센터",
+          "address": "광주 동구 금남로 231 ,2층 (금남로2가,금남빌딩)",
+          "category": "세 차 장",
+          "locality": "금남로2가",
+          "lat": 35.1490440067958,
+          "lng": 126.917628214769,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 금남로 231",
+          "approximate": false
+        },
+        {
+          "id": 2626,
+          "name": "광주동구지역자활센터",
+          "address": "광주 동구 금남로 231 ,2층 (금남로2가,금남빌딩)",
+          "category": "기타음료식품",
+          "locality": "금남로2가",
+          "lat": 35.1490440067958,
+          "lng": 126.917628214769,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 금남로 231",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 2972,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 2972,
+          "name": "주식회사 와이즈뷰티테인먼트",
+          "address": "광주 동구 금남로 226-22 (금남로3가)",
+          "category": "화 장 품",
+          "locality": "금남로3가",
+          "lat": 35.1490890152923,
+          "lng": 126.915836401923,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 금남로 226-22",
+          "approximate": false
+        },
+        {
+          "id": 2978,
+          "name": "주식회사 와이즈뷰티테인먼트",
+          "address": "광주 동구 금남로 226-22 (금남로3가)",
+          "category": "기능학원",
+          "locality": "금남로3가",
+          "lat": 35.1490890152923,
+          "lng": 126.915836401923,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 금남로 226-22",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 3040,
+      "reason": "동일 주소 3층의 괄호 위치 차이",
+      "records": [
+        {
+          "id": 3040,
+          "name": "주식회사이화원",
+          "address": "광주 동구 서석로 51 (금남로1가)3층",
+          "category": "스넥",
+          "locality": "금남로1가",
+          "lat": 35.1472281174821,
+          "lng": 126.918685085951,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 서석로 51",
+          "approximate": false
+        },
+        {
+          "id": 3044,
+          "name": "주식회사이화원",
+          "address": "광주 동구 서석로 51 3층 (금남로1가)",
+          "category": "서양음식",
+          "locality": "금남로1가",
+          "lat": 35.1472281174821,
+          "lng": 126.918685085951,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 서석로 51",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 3205,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 3205,
+          "name": "비담한복",
+          "address": "광주 동구 필문대로 136 1층 (산수동)",
+          "category": "맞춤복 점",
+          "locality": "산수동",
+          "lat": 35.1585826796179,
+          "lng": 126.930784523961,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 필문대로 136",
+          "approximate": false
+        },
+        {
+          "id": 3206,
+          "name": "비담한복",
+          "address": "광주 동구 필문대로 136 1층 (산수동)",
+          "category": "맞춤복 점",
+          "locality": "산수동",
+          "lat": 35.1585826796179,
+          "lng": 126.930784523961,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 필문대로 136",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 3717,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 3717,
+          "name": "섬마을",
+          "address": "광주 동구 동계천로 68 (대인동)",
+          "category": "일반한식",
+          "locality": "대인동",
+          "lat": 35.1533128437226,
+          "lng": 126.918685288174,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 동계천로 68",
+          "approximate": false
+        },
+        {
+          "id": 3718,
+          "name": "섬마을",
+          "address": "광주 동구 동계천로 68 (대인동)",
+          "category": "농축수산품",
+          "locality": "대인동",
+          "lat": 35.1533128437226,
+          "lng": 126.918685288174,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 동계천로 68",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 3722,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 3722,
+          "name": "유한회사 광주대성학원",
+          "address": "광주 동구 제봉로 92 (서석동)",
+          "category": "보습학원",
+          "locality": "서석동",
+          "lat": 35.1465784904679,
+          "lng": 126.922230967915,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 제봉로 92",
+          "approximate": false
+        },
+        {
+          "id": 3732,
+          "name": "유한회사광주대성학원",
+          "address": "광주 동구 제봉로 92 (서석동)",
+          "category": "학원(회원제형태)",
+          "locality": "서석동",
+          "lat": 35.1465784904679,
+          "lng": 126.922230967915,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 제봉로 92",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 3768,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 3768,
+          "name": "용산아이멘토학원",
+          "address": "광주 동구 용산1로 4 ,3층 303호 (용산동,조은프라자)",
+          "category": "보습학원",
+          "locality": "용산동",
+          "lat": 35.1190891633711,
+          "lng": 126.924228891245,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 용산1로 4",
+          "approximate": false
+        },
+        {
+          "id": 3769,
+          "name": "용산아이멘토학원",
+          "address": "광주 동구 용산1로 4 ,3층 303호 (용산동,조은프라자)",
+          "category": "보습학원",
+          "locality": "용산동",
+          "lat": 35.1190891633711,
+          "lng": 126.924228891245,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 용산1로 4",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 3817,
+      "reason": "동일 주소 1층에 건물명만 추가 기재",
+      "records": [
+        {
+          "id": 3817,
+          "name": "목재문화카페",
+          "address": "광주 동구 경양로 310 1층 동구목재문화센터 (산수동)",
+          "category": "기타음료식품",
+          "locality": "산수동",
+          "lat": 35.1542028930123,
+          "lng": 126.923033884023,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 경양로 310",
+          "approximate": false
+        },
+        {
+          "id": 3818,
+          "name": "목재문화카페",
+          "address": "광주 동구 경양로 310 1층 (산수동)",
+          "category": "기타음료식품",
+          "locality": "산수동",
+          "lat": 35.1542028930123,
+          "lng": 126.923033884023,
+          "geocode_method": "normalized_road_address",
+          "geocode_address": "광주광역시 동구 경양로 310",
+          "approximate": false
+        }
+      ]
+    },
+    {
+      "keptId": 3951,
+      "reason": "상호명·상세주소(공백 제외)·좌표 일치",
+      "records": [
+        {
+          "id": 3951,
+          "name": "소호메이크업",
+          "address": "광주 동구 서석로7번길 6-46 (불로동)",
+          "category": "화 장 품",
+          "locality": "불로동",
+          "lat": 35.1461301884819,
+          "lng": 126.915679888215,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 서석로7번길 6-46",
+          "approximate": false
+        },
+        {
+          "id": 3952,
+          "name": "소호메이크업",
+          "address": "광주 동구 서석로7번길 6-46 (불로동)",
+          "category": "화 장 품",
+          "locality": "불로동",
+          "lat": 35.1461301884819,
+          "lng": 126.915679888215,
+          "geocode_method": "normalized_full",
+          "geocode_address": "광주광역시 동구 서석로7번길 6-46",
+          "approximate": false
+        }
+      ]
+    }
+  ]
+}

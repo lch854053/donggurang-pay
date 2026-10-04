@@ -96,7 +96,8 @@ function loadStaticMerchants() {
   if (Array.isArray(window.DONGGURANG_MERCHANTS)) return Promise.resolve(window.DONGGURANG_MERCHANTS);
   return new Promise((resolve) => {
     const script = document.createElement("script");
-    script.src = "./merchant-data.js";
+    const version = document.querySelector('meta[name="app-version"]')?.content;
+    script.src = "./merchant-data.js" + (version ? `?v=${encodeURIComponent(version)}` : "");
     script.onload = () => resolve(window.DONGGURANG_MERCHANTS || SAMPLE_MERCHANTS);
     script.onerror = () => {
       showToast("가맹점 자료를 불러오지 못해 시범자료를 표시합니다.");
@@ -123,7 +124,9 @@ function prepareMerchants(items) {
   return items.filter((merchant) => !String(merchant.business_status || "").includes("폐업"))
     .map((merchant) => {
       const category = displayCategory(merchant.category, merchant.name);
-      return { ...merchant, category, group: categoryGroup(category) };
+      const categories = [...new Set([merchant.category, ...(merchant.categories || [])]
+        .map((value) => displayCategory(value, merchant.name)))];
+      return { ...merchant, category, categories, group: categoryGroup(category), groups: [...new Set(categories.map(categoryGroup))] };
     });
 }
 
@@ -297,9 +300,9 @@ function applyClientFilters() {
   const normalizedQuery = state.query.trim().toLocaleLowerCase("ko-KR");
   const origin = state.userLocation;
   let items = state.merchants.filter((merchant) => {
-    const searchable = `${merchant.name} ${merchant.address} ${merchant.category} ${merchant.locality || ""}`.toLocaleLowerCase("ko-KR");
+    const searchable = `${merchant.name} ${(merchant.nameAliases || []).join(" ")} ${merchant.address} ${merchant.categories.join(" ")} ${merchant.locality || ""}`.toLocaleLowerCase("ko-KR");
     const queryMatches = !normalizedQuery || searchable.includes(normalizedQuery);
-    const categoryMatches = state.category === "all" || merchant.group === state.category;
+    const categoryMatches = state.category === "all" || merchant.groups.includes(state.category);
     const distance = origin && hasCoordinates(merchant) ? distanceMeters(origin, merchant) : null;
     merchant.distance = distance;
     const radiusMatches = state.tab !== "nearby" || !origin || distance === null || distance <= state.radius;
@@ -337,7 +340,7 @@ function renderMerchantList() {
     const fragment = template.content.cloneNode(true);
     fragment.querySelector(".merchant-icon").innerHTML = markerIcon(merchant.group);
     fragment.querySelector("strong").textContent = merchant.name;
-    fragment.querySelector(".category").textContent = merchant.category + (hasCoordinates(merchant) ? "" : " · 위치 확인 필요");
+    fragment.querySelector(".category").textContent = merchant.categories.join(" · ") + (hasCoordinates(merchant) ? "" : " · 위치 확인 필요");
     fragment.querySelector(".address").textContent = merchant.address + (merchant.approximate ? " · 위치를 확인해 주세요" : "");
     fragment.querySelector(".distance").textContent = hasCoordinates(merchant) ? formatDistance(merchant.distance) : "위치 확인 필요";
     fragment.querySelector("button").addEventListener("click", () => {
