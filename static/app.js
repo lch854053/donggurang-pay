@@ -629,6 +629,12 @@ async function searchAddress(query) {
   }
 }
 
+function updateSearchClearButtons() {
+  $$('[data-clear-search]').forEach((button) => {
+    button.hidden = !$("#" + button.dataset.clearSearch).value;
+  });
+}
+
 function bindEvents() {
   bindPanelGestures();
   [$(".brand-bar"), $(".search-panel")].forEach((element) => {
@@ -642,6 +648,7 @@ function bindEvents() {
     state.query = (event.currentTarget.id === "mobileSearchForm" ? $("#mobileSearchInput") : $("#searchInput")).value.trim();
     $("#searchInput").value = state.query;
     $("#mobileSearchInput").value = state.query;
+    updateSearchClearButtons();
     setActiveTab("search");
     if (state.query) {
       await searchAddress(state.query);
@@ -651,6 +658,21 @@ function bindEvents() {
   };
   $("#searchForm").addEventListener("submit", submitSearch);
   $("#mobileSearchForm").addEventListener("submit", submitSearch);
+  [$("#searchInput"), $("#mobileSearchInput")].forEach((input) => input.addEventListener("input", () => {
+    $("#searchInput").value = input.value;
+    $("#mobileSearchInput").value = input.value;
+    updateSearchClearButtons();
+  }));
+  $$('[data-clear-search]').forEach((button) => button.addEventListener("click", () => {
+    state.query = "";
+    $("#searchInput").value = "";
+    $("#mobileSearchInput").value = "";
+    updateSearchClearButtons();
+    $("#" + button.dataset.clearSearch).focus();
+    setActiveTab("search");
+    fetchMerchants();
+  }));
+  updateSearchClearButtons();
   $$(".filter-chip").forEach((button) => button.addEventListener("click", () => openSelectSheet()));
   $("#locationButton").addEventListener("click", () => locateUser());
   $("#clearSelectionButton").addEventListener("click", () => {
