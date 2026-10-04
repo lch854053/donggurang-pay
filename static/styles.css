@@ -22,18 +22,6 @@ html, body { width: 100%; height: 100%; margin: 0; }
 body { overflow: hidden; background: var(--cream); color: var(--ink); font-family: Pretendard, "Noto Sans KR", sans-serif; }
 button, input { font: inherit; }
 button { color: inherit; }
-.correction-button { display: block; margin: 4px 0 10px 56px; padding: 8px 10px; border: 0; border-radius: 8px; background: #f3f6f8; color: var(--muted); cursor: pointer; font-size: 12px; }
-.correction-button[hidden] { display: none; }
-.correction-dialog { width: min(460px, calc(100% - 32px)); max-height: 85dvh; padding: 24px; border: 1px solid var(--line); border-radius: 18px; color: var(--ink); overflow-y: auto; }
-.correction-dialog::backdrop { background: rgba(0,0,0,.4); }
-.correction-dialog h2 { margin-top: 0; font-size: 20px; }
-.correction-dialog label { display: grid; gap: 6px; margin: 14px 0; }
-.correction-dialog select, .correction-dialog textarea { width: 100%; padding: 10px; font: inherit; font-size: 16px; border: 1px solid var(--line); border-radius: 8px; }
-.correction-dialog .correction-trap { position: absolute; left: -10000px; }
-.correction-result { font-size: 13px; line-height: 1.6; }
-.correction-actions { display: flex; justify-content: flex-end; gap: 10px; }
-.correction-actions button { min-height: 44px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; background: white; cursor: pointer; }
-.correction-actions button[type="submit"] { background: var(--accent); color: white; }
 
 .app-shell { display: flex; flex-direction: column; height: 100%; }
 @supports (height: 100dvh) {
