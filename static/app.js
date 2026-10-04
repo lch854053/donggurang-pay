@@ -215,6 +215,7 @@ function initMap() {
   state.markerLayer.on("clusterclick", (event) => selectMapCluster(event.layer));
   state.markerLayer.on("animationend", updateMarkerSelection);
   state.map.addLayer(state.markerLayer);
+  state.map.on("zoom", updateMarkerSelection);
   state.map.on("moveend", () => {
     scheduleVisibleMarkers();
   });
@@ -383,7 +384,7 @@ function selectMapCluster(cluster) {
   if (state.map.getZoom() >= state.map.getMaxZoom()) {
     showSelectedMerchants(merchants);
   } else {
-    state.highlightedMerchants = merchants;
+    state.highlightedMerchants = [];
     updateMarkerSelection();
     cluster.zoomToBounds();
   }
@@ -397,20 +398,24 @@ function updateMarkerSelection() {
     layer.setZIndexOffset?.(0);
   }
   highlightedLayers.clear();
-  if (!state.markerLayer) return;
+  if (!state.markerLayer || !state.map?.getZoom || state.map.getZoom() < state.map.getMaxZoom()) return;
+  let selectedLayer = null;
   for (const merchant of state.highlightedMerchants) {
     const marker = visibleMarkers.get(merchant);
     if (!marker) continue;
     // Leaflet replaces cluster elements as zoom/viewport changes. Follow the visible parent.
     const layer = state.markerLayer.getVisibleParent?.(marker) || marker;
-    if (highlightedLayers.has(layer)) continue;
-    const element = layer.getElement?.();
-    if (!element) continue;
-    element.classList.add("map-marker-selected");
-    element.setAttribute("aria-pressed", "true");
-    layer.setZIndexOffset?.(1000);
-    highlightedLayers.add(layer);
+    if (!layer.getElement?.()) continue;
+    // Only emphasize a single visible marker, never multiple shops from a split cluster.
+    if (selectedLayer && selectedLayer !== layer) return;
+    selectedLayer = layer;
   }
+  if (!selectedLayer) return;
+  const element = selectedLayer.getElement();
+  element.classList.add("map-marker-selected");
+  element.setAttribute("aria-pressed", "true");
+  selectedLayer.setZIndexOffset?.(1000);
+  highlightedLayers.add(selectedLayer);
 }
 
 function renderVisibleMarkers() {
