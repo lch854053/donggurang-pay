@@ -37,12 +37,13 @@ test('published cleanup is reproducible from the complete audit, lossless for re
   const audit = JSON.parse(fs.readFileSync(new URL('../reports/merchant-deduplication.json', import.meta.url), 'utf8'));
   const keptIds = new Set(audit.merges.map((group) => group.keptId));
   const original = [...published.filter((item) => !keptIds.has(item.id)), ...audit.merges.flatMap((group) => group.records)].sort((a, b) => a.id - b.id);
-  assert.equal(original.length, 3797);
+  // The historical deduplication audit predates the requested removal of ID 2936.
+  assert.equal(original.length, audit.beforeCount - 1);
   assert.equal(audit.merges.length, 30);
   const result = deduplicateMerchants(original);
   assert.equal(result.removedCount, 35);
   assert.deepEqual(result.merchants, published);
-  assert.equal(audit.afterCount, published.length);
+  assert.equal(audit.afterCount - 1, published.length);
   assert.equal(deduplicateMerchants(published).removedCount, 0);
   assert.equal(published.filter((item) => item.name === '대한불교조계종증심사').length, 1);
   assert.deepEqual(published.find((item) => item.id === 178).categories, ['기타숙박업', '기타대인서비스']);

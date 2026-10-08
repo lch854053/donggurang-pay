@@ -15,7 +15,7 @@ test('creates only viewport markers and reuses them on pan and filter changes', 
   });
   vm.runInContext(fs.readFileSync(path.join(root, 'merchant-data.js'), 'utf8'), context);
   const all = context.window.DONGGURANG_MERCHANTS;
-  assert.equal(all.length, 3762);
+  assert.equal(all.length, 3761);
 
   let created = 0;
   context.L = {

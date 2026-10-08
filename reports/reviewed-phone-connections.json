@@ -6,11 +6,11 @@
     "food-phone-review-candidates.csv": "1b3d03fe5d9600edb7088d63f38b8a0ad85fd4a64b77e97a00df8ccc290bfab0",
     "food-phone-additions.csv": "d6bc0233869cd37510bf90f25b17b7460b6df71df03613b0652e83d8e262161e"
   },
-  "basePhoneCount": 2188,
+  "basePhoneCount": 2187,
   "reviewedMerchantCount": 135,
   "newPhoneMerchantCount": 135,
-  "phoneCount": 2323,
-  "totalMerchants": 3762,
+  "phoneCount": 2322,
+  "totalMerchants": 3761,
   "reviewedPhoneCount": 144,
   "multiplePhoneMerchantCount": 9,
   "excluded": [

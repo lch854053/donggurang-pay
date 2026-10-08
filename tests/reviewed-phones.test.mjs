@@ -19,7 +19,7 @@ test('connects all confirmed CSV rows except the specific KOMSCO merchant and re
   const overlay = data.DONGGURANG_REVIEWED_PHONES;
   const merged = { ...data.DONGGURANG_PHONES, ...overlay };
   assert.equal(Object.keys(overlay).length, 135);
-  assert.equal(Object.keys(merged).length, 2323);
+  assert.equal(Object.keys(merged).length, 2322);
   assert.equal(merged[2802], undefined);
   assert.equal(merged[3997].phone, '062-227-6581');
   assert.equal(report.excludedRows.length, 1);
@@ -34,7 +34,7 @@ test('connects all confirmed CSV rows except the specific KOMSCO merchant and re
   for (const [filename, sha] of Object.entries(report.csvHashes)) {
     assert.equal(crypto.createHash('sha256').update(fs.readFileSync(new URL(`../reports/${filename}`, import.meta.url))).digest('hex'), sha);
   }
-  assert.equal(data.DONGGURANG_MERCHANTS.length, 3762);
+  assert.equal(data.DONGGURANG_MERCHANTS.length, 3761);
 });
 
 test('keeps distinct confirmed numbers from multiple sources and merges duplicate numbers', () => {
@@ -51,6 +51,6 @@ test('rebuilding the confirmed overlay is deterministic and preserves base merch
   const files = ['static/merchant-data.js', 'static/merchant-phones.js', 'static/merchant-reviewed-phones.js', 'reports/reviewed-phone-connections.json'];
   const root = new URL('../', import.meta.url);
   const before = files.map((file) => fs.readFileSync(new URL(file, root)));
-  execFileSync('python3', ['scripts/apply-reviewed-phones.py', '--apply'], { cwd: root, stdio: 'pipe' });
+  execFileSync(process.env.PYTHON || 'python3', ['scripts/apply-reviewed-phones.py', '--apply'], { cwd: root, stdio: 'pipe' });
   for (const [index, file] of files.entries()) assert.ok(fs.readFileSync(new URL(file, root)).equals(before[index]), file);
 });
