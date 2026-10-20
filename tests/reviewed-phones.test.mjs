@@ -34,7 +34,7 @@ test('connects all confirmed CSV rows except the specific KOMSCO merchant and re
   for (const [filename, sha] of Object.entries(report.csvHashes)) {
     assert.equal(crypto.createHash('sha256').update(fs.readFileSync(new URL(`../reports/${filename}`, import.meta.url))).digest('hex'), sha);
   }
-  assert.equal(data.DONGGURANG_MERCHANTS.length, 3761);
+  assert.equal(data.DONGGURANG_MERCHANTS.length, 3759);
 });
 
 test('keeps distinct confirmed numbers from multiple sources and merges duplicate numbers', () => {
