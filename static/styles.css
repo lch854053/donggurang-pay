@@ -86,7 +86,33 @@ button { color: inherit; }
 .analysis-notes { padding: 16px 0 24px; font-size: 11px; }
 .analysis-notes a { color: var(--accent); }
 .analysis-empty { padding: 24px 0; text-align: center; }
-.comparison-card, .lq-card { margin-top: 24px; }
+.comparison-card, .lq-card, .diversity-card { margin-top: 24px; }
+.diversity-card .diversity-formula { margin: 0 0 16px; padding: 14px 16px; border-radius: 10px; background: #edf6fc; color: var(--ink); }
+.diversity-formula span { color: var(--muted); font-size: 12px; }
+.diversity-guide, .diversity-legend { display: flex; flex-wrap: wrap; gap: 10px 20px; font-size: 12px; }
+.diversity-guide { color: var(--muted); }
+.diversity-guide strong { margin-right: 6px; color: var(--ink); }
+.diversity-legend { margin-bottom: 16px; }
+.diversity-legend > span { display: inline-flex; align-items: center; gap: 6px; }
+.diversity-table { min-width: 720px; table-layout: fixed; }
+.diversity-table caption { padding: 0 0 12px; color: var(--muted); font-size: 11px; text-align: left; }
+.diversity-table th, .diversity-table td { vertical-align: middle; text-align: left; white-space: normal; }
+.diversity-table th:nth-child(1) { width: 90px; }
+.diversity-table th:nth-child(2) { width: 100px; }
+.diversity-table th:nth-child(3) { width: 140px; }
+.diversity-score > strong { display: block; margin-bottom: 8px; color: var(--accent); font-size: 20px; }
+.diversity-score small { color: var(--muted); font-size: 11px; font-weight: 400; }
+.diversity-score .stat-track { max-width: 100px; }
+.diversity-unavailable { color: var(--muted); font-size: 12px; }
+.diversity-stacked { display: flex; height: 14px; overflow: hidden; border-radius: 5px; background: #edf3f8; }
+.diversity-stacked > span { display: block; flex-shrink: 0; }
+.diversity-proportions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 16px; padding: 0; margin: 10px 0 0; list-style: none; font-size: 11px; }
+.diversity-proportions li { display: flex; align-items: center; gap: 5px; }
+.diversity-proportions strong { margin-left: auto; font-weight: 500; }
+.diversity-proportions .comparison-dot { width: 7px; height: 7px; }
+.diversity-card .diversity-note { margin: 18px 0 0; font-size: 12px; }
+.diversity-note > strong { color: var(--ink); }
+.diversity-table-wrap:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
 .lq-dong-label { display: flex; flex-shrink: 0; align-items: center; gap: 10px; font-size: 13px; font-weight: 650; }
 .lq-card .lq-formula { margin: 0 0 16px; padding: 14px 16px; border-radius: 10px; background: #edf6fc; color: var(--ink); }
 .lq-guide { display: flex; flex-wrap: wrap; gap: 10px 24px; color: var(--muted); font-size: 12px; }
@@ -150,7 +176,7 @@ button { color: inherit; }
   #analysisMap { height: 340px; }
   #analysisLegend { width: 100%; margin: 4px 0 0; }
   .analysis-columns { grid-template-columns: 1fr; gap: 16px; margin-top: 16px; }
-  .comparison-card, .lq-card { margin-top: 16px; }
+  .comparison-card, .lq-card, .diversity-card { margin-top: 16px; }
   .lq-results { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .lq-result { padding: 14px; }
   .lq-value > strong { font-size: 25px; }

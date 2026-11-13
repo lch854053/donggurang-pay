@@ -3,6 +3,7 @@
   const UNKNOWN = "미분류";
   const GROUPS = ["음식점·카페", "식품·마트", "패션·뷰티", "의료·건강", "교육·문화", "생활·주거", "스포츠·여가", "기타"];
   const COMPARISON_COLORS = ["#367fe8", "#32894b", "#a363d9", "#c76c13"];
+  const INDUSTRY_COLORS = ["#2678c9", "#318352", "#a15cae", "#bf6531", "#6270b5", "#31858b", "#997520", "#747780"];
   const validPoint = (m) => Number.isFinite(m.lat) && Number.isFinite(m.lng) && Math.abs(m.lat) <= 90 && Math.abs(m.lng) <= 180;
   const html = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const number = (n) => n.toLocaleString("ko-KR");
@@ -81,6 +82,20 @@
     return { name, total: local.length, districtTotal: merchants.length, rows };
   }
 
+  function industryDiversity(merchants, names) {
+    return names.map((name) => {
+      const items = merchants.filter((m) => m.analysisDong === name);
+      const totals = new Map(counts(items, "group"));
+      const composition = GROUPS.map((group) => {
+        const count = totals.get(group) || 0;
+        return { group, count, share: items.length ? count / items.length : 0 };
+      });
+      const entropy = items.length ? -composition.reduce((sum, { share }) => sum + (share ? share * Math.log(share) : 0), 0) : null;
+      const score = entropy === null ? null : Math.max(0, Math.min(100, entropy / Math.log(GROUPS.length) * 100));
+      return { name, total: items.length, entropy, score, composition };
+    });
+  }
+
   function init({ state, prepareMerchants, loadStaticMerchants, invalidateMapSize }) {
     const $ = (id) => document.getElementById(id);
     if (!$("analysisTab")) return;
@@ -92,6 +107,17 @@
     boundaries?.features.forEach((f) => dong.add(new Option(f.properties.name, f.properties.name)));
     dong.add(new Option(UNKNOWN, UNKNOWN));
     const dongNames = boundaries?.features.map((f) => f.properties.name) || [];
+    function renderDiversity() {
+      if (!merchants) return;
+      const rows = industryDiversity(merchants, dongNames);
+      const unclassified = merchants.filter((m) => !dongNames.includes(m.analysisDong)).length;
+      $("diversityStatus").textContent = `행정동 ${number(rows.length)}개 · 가맹점 ${number(rows.reduce((sum, row) => sum + row.total, 0))}곳 기준 · 행정동 미분류 ${number(unclassified)}곳 제외 · 상단 업종·행정동 필터와 독립적으로 전체 명단을 집계합니다.`;
+      $("diversityLegend").innerHTML = GROUPS.map((group, i) => `<span><span class="comparison-dot" style="background:${INDUSTRY_COLORS[i]}"></span>${html(group)}</span>`).join("");
+      $("diversityRows").innerHTML = rows.map((row) => {
+        const breakdown = row.composition.map((c) => `${c.group} ${number(c.count)}곳 ${(100 * c.share).toFixed(1)}%`).join(", ");
+        return `<tr><th scope="row">${html(row.name)}</th><td>${number(row.total)}곳</td><td class="diversity-score">${row.score === null ? '<span class="diversity-unavailable">계산 불가</span>' : `<strong>${row.score.toFixed(1)}<small> / 100</small></strong><div class="stat-track" aria-hidden="true"><span style="width:${row.score}%"></span></div>`}</td><td class="diversity-mix">${row.total ? `<div class="diversity-stacked" role="img" aria-label="${html(row.name + ': ' + breakdown)}">${row.composition.map((c, i) => c.count ? `<span style="width:${100 * c.share}%;background:${INDUSTRY_COLORS[i]}" title="${html(c.group)} ${number(c.count)}곳 · ${(100 * c.share).toFixed(1)}%"></span>` : "").join("")}</div><ul class="diversity-proportions">${row.composition.map((c, i) => `<li><span class="comparison-dot" style="background:${INDUSTRY_COLORS[i]}"></span><span>${html(c.group)}</span><strong>${(100 * c.share).toFixed(1)}%</strong></li>`).join("")}</ul>` : '<span class="diversity-unavailable">해당 동에 등록 가맹점이 없습니다.</span>'}</td></tr>`;
+      }).join("");
+    }
     const lqDong = $("lqDong");
     dongNames.forEach((name) => lqDong.add(new Option(name, name)));
     if (dongNames.includes("충장동")) lqDong.value = "충장동";
@@ -299,7 +325,7 @@
             merchants = assignDongs(items, boundaries);
           }
           if ($("analysisPanel").hidden) return;
-          initMap(); map.invalidateSize(); render(true); renderLq(); renderComparison();
+          initMap(); map.invalidateSize(); render(true); renderLq(); renderDiversity(); renderComparison();
         } catch (error) {
           console.error("Analysis unavailable", error);
           $("analysisStatus").textContent = "분석 자료를 불러오지 못했습니다. 분석 탭을 다시 눌러 재시도해 주세요.";
@@ -334,5 +360,5 @@
     }));
     window.addEventListener("resize", () => { if (map && !$("analysisPanel").hidden) map.invalidateSize(); });
   }
-  window.DonggurangAnalysis = { init, inGeometry, assignDongs, counts, gridCells, validPoint, compareDongs, locationQuotients, lqLevel };
+  window.DonggurangAnalysis = { init, inGeometry, assignDongs, counts, gridCells, validPoint, compareDongs, locationQuotients, lqLevel, industryDiversity };
 })();

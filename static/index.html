@@ -95,6 +95,15 @@
         <div id="lqResults" class="lq-results"></div>
         <p class="lq-note">상단 업종·행정동 필터와 독립적으로 각 동 전체 가맹점과 동구 전체 명단(행정동 미분류 포함)을 기준으로 계산합니다. 대표 업종으로 중복 없이 집계하며, LQ가 높은 순서로 표시합니다. 해당 동에 가맹점이 없거나 동구 전체에 해당 업종이 없으면 계산 불가로 표시합니다. 등록 가맹점 수 기준의 상대적 집중도로, 매출·수익성·상권의 우수성을 뜻하지 않습니다.</p>
       </section>
+      <section class="analysis-card diversity-card" aria-labelledby="diversityTitle">
+        <div class="analysis-card-heading"><div><h2 id="diversityTitle">업종 다양성 지수</h2><p>행정동별 업종이 얼마나 다양하고 고르게 분포하는지 비교합니다.</p></div></div>
+        <p class="diversity-formula">샤논 지수 H = −Σ(pᵢ × ln pᵢ) · 다양성 점수 = H ÷ ln(8) × 100<br><span>pᵢ는 해당 동 전체 가맹점 중 업종별 비율입니다. 8개 대분류를 고정 기준으로 계산하며, 가맹점이 없는 업종의 기여도는 0입니다.</span></p>
+        <div class="diversity-guide"><span><strong>0점</strong> 한 업종에 집중</span><span><strong>100점</strong> 8개 업종이 동일한 비율</span></div>
+        <p id="diversityStatus" role="status"></p>
+        <div id="diversityLegend" class="diversity-legend" aria-label="업종 색상 범례"></div>
+        <div class="analysis-table-wrap diversity-table-wrap" tabindex="0" role="region" aria-label="행정동별 다양성 점수와 업종 구성비, 가로 스크롤 가능"><table class="analysis-table diversity-table"><caption>행정동별 다양성 점수와 업종 구성비 (점수·비율은 소수점 첫째 자리 반올림)</caption><thead><tr><th scope="col">행정동</th><th scope="col">가맹점 수</th><th scope="col">다양성 점수</th><th scope="col">업종 구성비</th></tr></thead><tbody id="diversityRows"></tbody></table></div>
+        <p class="diversity-note"><strong>점수가 높다고 반드시 상권이 우수한 것은 아닙니다.</strong> 등록 가맹점의 업종 구성 다양성만 측정하며, 매출·수익성·수요·상권 경쟁력은 평가하지 않습니다. 가맹점 수가 적은 동은 구성 변화에 점수가 민감할 수 있습니다. 가맹점이 없는 동은 계산 불가로 표시하며, 복수 업종 가맹점은 대표 업종으로 한 번만 집계합니다. 반올림으로 구성비 합계가 100%와 다를 수 있습니다.</p>
+      </section>
       <section class="analysis-card comparison-card" aria-labelledby="comparisonTitle">
         <div class="analysis-card-heading"><div><h2 id="comparisonTitle">행정동 간 업종 구성 비교</h2><p>2~4개 동을 나란히 비교해 상대적으로 많은 업종을 살펴보세요.</p></div>
           <div class="view-toggle" role="group" aria-label="행정동 비교 기준"><button type="button" data-comparison-metric="share" aria-pressed="true">구성비 (%)</button><button type="button" data-comparison-metric="count" aria-pressed="false">가맹점 수</button></div>

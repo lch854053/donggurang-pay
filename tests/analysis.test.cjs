@@ -179,3 +179,68 @@ test('real published LQs match direct primary-industry counts for each administr
     });
   }
 });
+
+test('Shannon diversity uses a fixed eight-industry maximum: uniform 100, two equal 33.3, one 0', () => {
+  const { DonggurangAnalysis: a } = setup();
+  const groups = ['음식점·카페', '식품·마트', '패션·뷰티', '의료·건강', '교육·문화', '생활·주거', '스포츠·여가', '기타'];
+  const items = [
+    ...groups.map((group) => ({ analysisDong: '균등동', group })),
+    { analysisDong: '두업종동', group: groups[0] }, { analysisDong: '두업종동', group: groups[1] },
+    { analysisDong: '집중동', group: groups[0] }, { analysisDong: '집중동', group: groups[0] }
+  ];
+  const original = JSON.stringify(items);
+  const [uniform, two, single] = a.industryDiversity(items, ['균등동', '두업종동', '집중동']);
+  assert.ok(Math.abs(uniform.score - 100) < 1e-10);
+  assert.ok(Math.abs(uniform.entropy - Math.log(8)) < 1e-10);
+  assert.ok(Math.abs(two.score - 100 / 3) < 1e-10);
+  assert.equal(single.score, 0);
+  assert.equal(single.composition.length, 8);
+  assert.equal(JSON.stringify(items), original);
+});
+
+test('diversity preserves zero versus unavailable, and primary-industry proportions sum to one', () => {
+  const { DonggurangAnalysis: a } = setup();
+  const items = [
+    { analysisDong: 'A동', group: '식품·마트', groups: ['식품·마트', '패션·뷰티'] },
+    { analysisDong: 'A동', group: '식품·마트' },
+    { analysisDong: 'A동', group: '기타' },
+    { analysisDong: '미분류', group: '음식점·카페' }
+  ];
+  const [local, empty] = a.industryDiversity(items, ['A동', '빈동']);
+  assert.equal(local.total, 3);
+  assert.equal(local.composition.find((c) => c.group === '식품·마트').share, 2 / 3);
+  assert.equal(local.composition.find((c) => c.group === '패션·뷰티').count, 0);
+  assert.equal(local.composition.reduce((sum, c) => sum + c.share, 0), 1);
+  assert.equal(empty.total, 0);
+  assert.equal(empty.score, null);
+  assert.equal(empty.entropy, null);
+  assert.equal(a.industryDiversity([], ['A동'])[0].score, null);
+});
+
+test('diversity increases with evenness and is invariant to scaling shop counts', () => {
+  const { DonggurangAnalysis: a } = setup();
+  const items = Array.from({ length: 10 }, (_, i) => ({ analysisDong: 'A동', group: i < 9 ? '식품·마트' : '기타' }));
+  const score = a.industryDiversity(items, ['A동'])[0].score;
+  const balanced = a.industryDiversity(items.map((m, i) => ({ ...m, group: i < 5 ? '식품·마트' : '기타' })), ['A동'])[0].score;
+  assert.ok(score > 0 && score < balanced && balanced < 100);
+  assert.equal(a.industryDiversity([...items, ...items], ['A동'])[0].score, score);
+});
+
+test('published dong diversity scores agree with direct entropy calculations', () => {
+  const context = vm.createContext({ window: { location: { search: '' } }, console, URLSearchParams, document: { querySelector: () => null }, setTimeout, clearTimeout });
+  for (const file of ['analysis.js', 'dong-boundaries.js', 'merchant-data.js', 'app.js']) {
+    vm.runInContext(fs.readFileSync(path.join(__dirname, '../static', file), 'utf8').replace(/main\(\);\s*$/, ''), context);
+  }
+  const items = vm.runInContext('window.DonggurangAnalysis.assignDongs(prepareMerchants(window.DONGGURANG_MERCHANTS), window.DONGGURANG_BOUNDARIES)', context);
+  const names = context.window.DONGGURANG_BOUNDARIES.features.map((f) => f.properties.name);
+  const rows = context.window.DonggurangAnalysis.industryDiversity(items, names);
+  assert.equal(rows.length, 13);
+  rows.forEach((row) => {
+    const local = items.filter((m) => m.analysisDong === row.name);
+    const counts = new Map(); local.forEach((m) => counts.set(m.group, (counts.get(m.group) || 0) + 1));
+    const expected = -[...counts.values()].reduce((sum, n) => sum + n / local.length * Math.log(n / local.length), 0) / Math.log(8) * 100;
+    assert.ok(Math.abs(row.score - expected) < 1e-10);
+    assert.ok(row.score >= 0 && row.score <= 100);
+    assert.equal(row.composition.reduce((sum, c) => sum + c.count, 0), local.length);
+  });
+});
