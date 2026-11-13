@@ -109,9 +109,7 @@
         const parts = row.group.split("·");
         return bars + `<text x="${center}" y="${height - 36}" text-anchor="middle" class="comparison-axis">${parts.map((part, i) => `<tspan x="${center}" dy="${i ? 17 : 0}">${html(part)}</tspan>`).join("")}</text>`;
       }).join("");
-      $("comparisonChart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" style="min-width:${width}px" role="img" aria-labelledby="comparisonChartTitle comparisonChartDescription"><title id="comparisonChartTitle">${html(regions.map((r) => r.name).join(" · "))} 업종별 ${share ? "구성비" : "가맹점 수"} 비교</title><desc id="comparisonChartDescription">각 업종에서 A부터 순서대로 동별 막대를 표시합니다. 정확한 수치는 아래 업종별 상세 표에서 확인할 수 있습니다.</desc>${grid}${columns}</svg>`;
-      $("comparisonTableHead").innerHTML = `<tr><th scope="col">업종</th>${regions.map((region, i) => `<th scope="col">${html(region.name)}<br>가맹점 수 / 구성비${i ? " / A 대비" : ""}</th>`).join("")}</tr>`;
-      $("comparisonTableBody").innerHTML = rows.map((row) => `<tr><th scope="row">${html(row.group)}</th>${row.values.map((value, i) => `<td>${number(value.count)}곳 / ${value.share.toFixed(1)}%${i ? ` / ${gap(value.gap)}` : ""}</td>`).join("")}</tr>`).join("");
+      $("comparisonChart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" style="min-width:${width}px" role="img" aria-labelledby="comparisonChartTitle comparisonChartDescription"><title id="comparisonChartTitle">${html(regions.map((r) => r.name).join(" · "))} 업종별 ${share ? "구성비" : "가맹점 수"} 비교</title><desc id="comparisonChartDescription">각 업종에서 A부터 순서대로 동별 막대를 표시합니다. ${rows.map((row) => `${html(row.group)}: ${row.values.map((value, i) => `${html(regions[i].name)} ${number(value.count)}곳, ${value.share.toFixed(1)}%`).join("; ")}`).join(". ")}</desc>${grid}${columns}</svg>`;
       $("comparisonInsights").innerHTML = regions.slice(1).map((region, index) => {
         const i = index + 1;
         if (!region.total || !regions[0].total) return `<p>${html(regions[0].name)} · ${html(region.name)}: 가맹점이 없는 동이 있어 구성비 차이를 계산하지 않습니다.</p>`;

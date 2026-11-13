@@ -111,9 +111,6 @@ button { color: inherit; }
 .comparison-value { fill: #383345; font-size: 9px; }
 .comparison-insights { margin-top: 16px; padding: 4px 16px; border-radius: 10px; background: #edf6fc; }
 .comparison-insights p { margin: 12px 0; color: var(--ink); }
-.comparison-details { margin-top: 16px; font-size: 13px; }
-.comparison-details summary { min-height: 40px; padding: 10px 0; color: var(--accent); cursor: pointer; }
-.comparison-table caption { padding: 12px 0; color: var(--muted); text-align: left; font-size: 12px; }
 @media (max-width: 760px) {
   .service-tabs button { min-width: 48px; min-height: 34px; font-size: 13px; }
   .analysis-panel { padding: 24px 16px; }
