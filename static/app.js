@@ -700,6 +700,7 @@ async function main() {
   // Let the browser paint and request the base tiles before parsing merchant data.
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 0))));
   await fetchMerchants();
+  window.DonggurangAnalysis?.init({ state, prepareMerchants, loadStaticMerchants, invalidateMapSize });
   if (MOBILE_SAMPLE_MODE) {
     showToast("모바일 테스트용 시범자료 12개를 불러왔습니다.");
   } else if (!state.staticMode) {

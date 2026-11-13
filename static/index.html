@@ -20,11 +20,15 @@
         <span><strong>동구랑<span>페이</span></strong></span>
       </a>
       <div class="header-actions">
+        <nav class="service-tabs" role="tablist" aria-label="서비스 선택">
+          <button id="mapTab" type="button" role="tab" aria-controls="mapPanel" aria-selected="true">지도</button>
+          <button id="analysisTab" type="button" role="tab" aria-controls="analysisPanel" aria-selected="false" tabindex="-1">분석</button>
+        </nav>
         <a class="admin-link" href="./admin.html">관리자</a>
       </div>
     </header>
 
-    <main class="workspace" data-sheet-level="compact">
+    <main id="mapPanel" role="tabpanel" aria-labelledby="mapTab" class="workspace" data-sheet-level="compact">
       <section class="search-panel" aria-label="가맹점 검색">
         <button class="panel-handle" id="panelHandle" type="button" aria-label="가맹점 목록 크게 펼치기" aria-expanded="true" aria-controls="merchantList"><span></span></button>
         <form class="search-form" id="searchForm">
@@ -61,6 +65,30 @@
         </button>
       </section>
     </main>
+    <section id="analysisPanel" class="analysis-panel" role="tabpanel" aria-labelledby="analysisTab" hidden>
+      <div class="analysis-heading"><div><p class="eyebrow">DONGGURANG INSIGHTS</p><h1>동구 가맹점 분석</h1><p>우리 동네 업종과 가맹점 분포를 한눈에 살펴보세요.</p></div></div>
+      <div class="analysis-controls">
+        <label>업종 <select id="analysisCategory"><option value="all">전체 업종</option></select></label>
+        <label>행정동 <select id="analysisDong"><option value="all">동구 전체</option></select></label>
+        <button id="analysisReset" type="button">선택 초기화</button>
+      </div>
+      <p id="analysisStatus" role="status">분석 자료를 준비하고 있습니다.</p>
+      <div class="analysis-summary" id="analysisSummary"></div>
+      <section class="analysis-card distribution-card" aria-labelledby="distributionTitle">
+        <div class="analysis-card-heading"><div><h2 id="distributionTitle">업종별 분포도</h2><p>선택한 업종과 행정동의 공간 분포</p></div>
+          <div class="distribution-controls"><div class="view-toggle" role="group" aria-label="분포도 표시 방식"><button type="button" data-analysis-mode="heat" aria-pressed="true">히트맵</button><button type="button" data-analysis-mode="grid" aria-pressed="false">격자</button></div>
+            <label id="gridSizeLabel" hidden>격자 크기 <select id="analysisGridSize"><option value="250">250m</option><option value="500">500m</option><option value="1000">1km</option></select></label>
+          </div>
+        </div>
+        <div id="analysisMap" aria-label="가맹점 분포 분석 지도"></div>
+        <div class="analysis-legend"><span>낮음</span><span class="density-gradient" aria-hidden="true"></span><span>높음</span><span id="analysisLegend"></span></div>
+      </section>
+      <div class="analysis-columns">
+        <section class="analysis-card" aria-labelledby="industryTitle"><h2 id="industryTitle">업종 통계</h2><p>가맹점별 대표 업종으로 중복 없이 집계합니다.</p><div id="industryStats"></div></section>
+        <section class="analysis-card" aria-labelledby="dongTitle"><h2 id="dongTitle">행정동별 가맹점 분석</h2><p>행을 선택하면 해당 동의 분포와 업종 구성을 확인할 수 있습니다.</p><div class="analysis-table-wrap"><table class="analysis-table"><thead><tr><th scope="col">행정동</th><th scope="col">가맹점 수</th><th scope="col">비율</th><th scope="col">대표 업종</th></tr></thead><tbody id="dongStats"></tbody></table></div></section>
+      </div>
+      <footer class="analysis-notes"><p>가맹점 명단: 2026년 9월 7일 기준 자료에 기존 제외·중복 정리를 반영. 매출·이용량이 아닌 등록 가맹점 수 분석입니다. 지도 탭의 검색 조건과는 독립적으로 집계합니다.</p><p>행정동 경계: 2026년 10월 1일 기준. 좌표 기반 공간 대조이며 경계 밖·좌표 없음은 ‘미분류’로 표시합니다. 격자는 동구 중심 위도 기준 근사 거리입니다.</p><p>본 데이터는 <a href="https://sgis.kostat.go.kr" target="_blank" rel="noopener">통계청 통계지리정보서비스(SGIS)</a>에서 공공누리 제1유형으로 개방한 행정동 경계를 가공한 것이며(가공: <a href="https://github.com/vuski/admdongkor" target="_blank" rel="noopener">vuski/admdongkor</a>, 동구 추출), <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>으로 배포됩니다. 경계·좌표 오차가 있을 수 있습니다.</p></footer>
+    </section>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -84,6 +112,8 @@
   <script src="https://cdn.jsdelivr.net/npm/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="./merchant-phones.js"></script>
   <script src="./merchant-reviewed-phones.js"></script>
+  <script src="./dong-boundaries.js"></script>
+  <script src="./analysis.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>
