@@ -87,6 +87,14 @@
         <section class="analysis-card" aria-labelledby="industryTitle"><h2 id="industryTitle">업종 통계</h2><p>가맹점별 대표 업종으로 중복 없이 집계합니다.</p><div id="industryStats"></div></section>
         <section class="analysis-card" aria-labelledby="dongTitle"><h2 id="dongTitle">행정동별 가맹점 분석</h2><p>행을 선택하면 해당 동의 분포와 업종 구성을 확인할 수 있습니다.</p><div class="analysis-table-wrap"><table class="analysis-table"><thead><tr><th scope="col">행정동</th><th scope="col">가맹점 수</th><th scope="col">비율</th><th scope="col">대표 업종</th></tr></thead><tbody id="dongStats"></tbody></table></div></section>
       </div>
+      <section class="analysis-card lq-card" aria-labelledby="lqTitle">
+        <div class="analysis-card-heading"><div><h2 id="lqTitle">업종별 특화도 (LQ) 분석</h2><p>선택한 동의 업종 비율이 동구 전체에 비해 얼마나 높은지 살펴보세요.</p></div><label class="lq-dong-label" for="lqDong">분석 행정동 <select id="lqDong"></select></label></div>
+        <p class="lq-formula">LQ = 해당 동의 특정 업종 비율 ÷ 동구 전체의 해당 업종 비율</p>
+        <div class="lq-guide"><span><strong>1 초과</strong> 상대적 집중</span><span><strong>1</strong> 동구 평균</span><span><strong>1 미만</strong> 상대적 낮음</span></div>
+        <p id="lqStatus" role="status"></p>
+        <div id="lqResults" class="lq-results"></div>
+        <p class="lq-note">상단 업종·행정동 필터와 독립적으로 각 동 전체 가맹점과 동구 전체 명단(행정동 미분류 포함)을 기준으로 계산합니다. 대표 업종으로 중복 없이 집계하며, LQ가 높은 순서로 표시합니다. 해당 동에 가맹점이 없거나 동구 전체에 해당 업종이 없으면 계산 불가로 표시합니다. 등록 가맹점 수 기준의 상대적 집중도로, 매출·수익성·상권의 우수성을 뜻하지 않습니다.</p>
+      </section>
       <section class="analysis-card comparison-card" aria-labelledby="comparisonTitle">
         <div class="analysis-card-heading"><div><h2 id="comparisonTitle">행정동 간 업종 구성 비교</h2><p>2~4개 동을 나란히 비교해 상대적으로 많은 업종을 살펴보세요.</p></div>
           <div class="view-toggle" role="group" aria-label="행정동 비교 기준"><button type="button" data-comparison-metric="share" aria-pressed="true">구성비 (%)</button><button type="button" data-comparison-metric="count" aria-pressed="false">가맹점 수</button></div>

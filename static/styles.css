@@ -86,7 +86,29 @@ button { color: inherit; }
 .analysis-notes { padding: 16px 0 24px; font-size: 11px; }
 .analysis-notes a { color: var(--accent); }
 .analysis-empty { padding: 24px 0; text-align: center; }
-.comparison-card { margin-top: 24px; }
+.comparison-card, .lq-card { margin-top: 24px; }
+.lq-dong-label { display: flex; flex-shrink: 0; align-items: center; gap: 10px; font-size: 13px; font-weight: 650; }
+.lq-card .lq-formula { margin: 0 0 16px; padding: 14px 16px; border-radius: 10px; background: #edf6fc; color: var(--ink); }
+.lq-guide { display: flex; flex-wrap: wrap; gap: 10px 24px; color: var(--muted); font-size: 12px; }
+.lq-guide strong { margin-right: 6px; color: var(--ink); }
+.lq-results { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.lq-result { min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: #fafbfd; }
+.lq-result h3 { margin: 0 0 14px; font-size: 14px; }
+.lq-value { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.lq-value > strong { font-size: 28px; letter-spacing: -.04em; }
+.lq-value > span { padding: 4px 7px; border-radius: 6px; background: #eceff3; color: #575063; font-size: 11px; font-weight: 650; }
+.lq-high { border-color: #b9d9c3; background: #f6fbf7; }
+.lq-high .lq-value > strong { color: #267334; }
+.lq-high .lq-value > span { color: #267334; background: #e2f2e7; }
+.lq-low .lq-value > strong { color: #0874be; }
+.lq-low .lq-value > span { color: #075b96; background: #e4f0fa; }
+.lq-result dl { display: grid; gap: 6px; margin: 16px 0 0; font-size: 11px; }
+.lq-result dl > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px; }
+.lq-result dt { color: var(--muted); }
+.lq-result dd { margin: 0; }
+.lq-result p { margin: 12px 0 0; font-size: 11px; }
+.lq-card .lq-note { margin: 18px 0 0; font-size: 11px; }
+@media (min-width: 761px) and (max-width: 1100px) { .lq-results { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .comparison-selectors { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
 .comparison-selector { min-width: 0; }
 .comparison-selector label { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: var(--muted); font-size: 13px; font-weight: 650; }
@@ -128,7 +150,10 @@ button { color: inherit; }
   #analysisMap { height: 340px; }
   #analysisLegend { width: 100%; margin: 4px 0 0; }
   .analysis-columns { grid-template-columns: 1fr; gap: 16px; margin-top: 16px; }
-  .comparison-card { margin-top: 16px; }
+  .comparison-card, .lq-card { margin-top: 16px; }
+  .lq-results { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .lq-result { padding: 14px; }
+  .lq-value > strong { font-size: 25px; }
   .comparison-selectors { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .comparison-selector > div { flex-wrap: wrap; }
   .comparison-selector button { width: 100%; }

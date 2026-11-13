@@ -61,6 +61,26 @@
     return { regions: regions.map(({ name, total }) => ({ name, total })), rows };
   }
 
+  function lqLevel(value) {
+    if (value === null) return { key: "unavailable", label: "계산 불가" };
+    if (Math.abs(value - 1) < 1e-10) return { key: "average", label: "동구 평균" };
+    return value > 1 ? { key: "high", label: "상대적 집중" } : { key: "low", label: "상대적 낮음" };
+  }
+
+  function locationQuotients(merchants, name) {
+    const local = merchants.filter((m) => m.analysisDong === name);
+    const districtCounts = new Map(counts(merchants, "group"));
+    const localCounts = new Map(counts(local, "group"));
+    const rows = GROUPS.map((group) => {
+      const count = localCounts.get(group) || 0, districtCount = districtCounts.get(group) || 0;
+      const share = local.length ? count / local.length : null;
+      const districtShare = merchants.length ? districtCount / merchants.length : null;
+      const lq = share !== null && districtShare > 0 ? share / districtShare : null;
+      return { group, count, districtCount, share, districtShare, lq, level: lqLevel(lq) };
+    }).sort((a, b) => (b.lq ?? -1) - (a.lq ?? -1));
+    return { name, total: local.length, districtTotal: merchants.length, rows };
+  }
+
   function init({ state, prepareMerchants, loadStaticMerchants, invalidateMapSize }) {
     const $ = (id) => document.getElementById(id);
     if (!$("analysisTab")) return;
@@ -72,6 +92,22 @@
     boundaries?.features.forEach((f) => dong.add(new Option(f.properties.name, f.properties.name)));
     dong.add(new Option(UNKNOWN, UNKNOWN));
     const dongNames = boundaries?.features.map((f) => f.properties.name) || [];
+    const lqDong = $("lqDong");
+    dongNames.forEach((name) => lqDong.add(new Option(name, name)));
+    if (dongNames.includes("충장동")) lqDong.value = "충장동";
+    function renderLq() {
+      if (!merchants) return;
+      const result = locationQuotients(merchants, lqDong.value);
+      const top = result.rows.find((row) => row.level.key === "high");
+      $("lqStatus").textContent = `${result.name} ${number(result.total)}곳 · 동구 전체 ${number(result.districtTotal)}곳 기준${top ? ` · 가장 특화된 업종: ${top.group}` : ""}${!result.total ? " · 해당 동에 가맹점이 없어 LQ를 계산할 수 없습니다." : ""}`;
+      const shareText = (value) => value === null ? "—" : `${(100 * value).toFixed(1)}%`;
+      $("lqResults").innerHTML = result.rows.map((row) => {
+        // Avoid showing 1.00 beside a higher/lower classification after rounding.
+        const value = row.lq === null ? "—" : row.level.key === "average" ? "1.00" : row.lq.toFixed(2) === "1.00" ? row.lq > 1 ? "1 초과" : "1 미만" : row.lq.toFixed(2);
+        return `<article class="lq-result lq-${row.level.key}"><h3>${html(row.group)}</h3><div class="lq-value"><strong>${value}</strong><span>${row.level.label}</span></div><dl><div><dt>${html(result.name)}</dt><dd>${number(row.count)}곳 · ${shareText(row.share)}</dd></div><div><dt>동구 전체</dt><dd>${number(row.districtCount)}곳 · ${shareText(row.districtShare)}</dd></div></dl>${row.lq === null ? `<p>${result.total ? "동구 전체에 해당 업종이 없습니다." : "해당 동에 가맹점이 없습니다."}</p>` : ""}</article>`;
+      }).join("");
+    }
+    lqDong.addEventListener("change", renderLq);
     let comparisonNames = ["계림2동", "충장동"].filter((name) => dongNames.includes(name));
     if (comparisonNames.length < 2) comparisonNames = dongNames.slice(0, 2);
     let comparisonMetric = "share";
@@ -263,7 +299,7 @@
             merchants = assignDongs(items, boundaries);
           }
           if ($("analysisPanel").hidden) return;
-          initMap(); map.invalidateSize(); render(true); renderComparison();
+          initMap(); map.invalidateSize(); render(true); renderLq(); renderComparison();
         } catch (error) {
           console.error("Analysis unavailable", error);
           $("analysisStatus").textContent = "분석 자료를 불러오지 못했습니다. 분석 탭을 다시 눌러 재시도해 주세요.";
@@ -298,5 +334,5 @@
     }));
     window.addEventListener("resize", () => { if (map && !$("analysisPanel").hidden) map.invalidateSize(); });
   }
-  window.DonggurangAnalysis = { init, inGeometry, assignDongs, counts, gridCells, validPoint, compareDongs };
+  window.DonggurangAnalysis = { init, inGeometry, assignDongs, counts, gridCells, validPoint, compareDongs, locationQuotients, lqLevel };
 })();

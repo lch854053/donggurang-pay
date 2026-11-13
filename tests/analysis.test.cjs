@@ -108,3 +108,74 @@ test('real-data comparison for 계림2동 and 충장동 matches independent filt
     assert.equal(result.rows[7].values[i].share, 100);
   });
 });
+
+test('LQ uses full dong and district denominators and calculates 1.8, 1, and 0.5', () => {
+  const { DonggurangAnalysis: a } = setup();
+  const records = (analysisDong, group, count) => Array.from({ length: count }, () => ({ analysisDong, group, groups: [group, '기타'] }));
+  const items = [
+    ...records('A동', '식품·마트', 18), ...records('A동', '음식점·카페', 10),
+    ...records('A동', '패션·뷰티', 10), ...records('A동', '기타', 12),
+    ...records('B동', '식품·마트', 22), ...records('B동', '음식점·카페', 30),
+    ...records('B동', '패션·뷰티', 70), ...records('미분류', '기타', 28)
+  ];
+  const original = JSON.stringify(items);
+  const result = a.locationQuotients(items, 'A동');
+  assert.equal(result.total, 50);
+  assert.equal(result.districtTotal, 200);
+  const food = result.rows.find((r) => r.group === '식품·마트');
+  assert.ok(Math.abs(food.lq - 1.8) < 1e-12);
+  assert.equal(food.level.label, '상대적 집중');
+  assert.equal(food.share, .36);
+  assert.equal(food.districtShare, .2);
+  assert.equal(result.rows.find((r) => r.group === '음식점·카페').lq, 1);
+  assert.equal(result.rows.find((r) => r.group === '음식점·카페').level.label, '동구 평균');
+  assert.equal(result.rows.find((r) => r.group === '패션·뷰티').lq, .5);
+  assert.equal(result.rows.find((r) => r.group === '패션·뷰티').level.label, '상대적 낮음');
+  assert.equal(result.rows[0].group, '식품·마트');
+  assert.equal(result.rows.length, 8);
+  assert.equal(JSON.stringify(items), original);
+});
+
+test('LQ distinguishes no local industry (zero) from unavailable denominators (null)', () => {
+  const { DonggurangAnalysis: a } = setup();
+  const items = [{ analysisDong: 'A동', group: '기타' }, { analysisDong: 'B동', group: '식품·마트' }];
+  const rows = a.locationQuotients(items, 'A동').rows;
+  const zero = rows.find((r) => r.group === '식품·마트');
+  assert.equal(zero.lq, 0);
+  assert.equal(zero.level.label, '상대적 낮음');
+  assert.equal(rows.find((r) => r.group === '패션·뷰티').lq, null);
+  for (const result of [a.locationQuotients(items, '빈동'), a.locationQuotients([], '빈동')]) {
+    result.rows.forEach((row) => {
+      assert.equal(row.lq, null);
+      assert.equal(row.level.label, '계산 불가');
+    });
+  }
+  assert.equal(a.lqLevel(1 + Number.EPSILON).label, '동구 평균');
+  assert.equal(a.lqLevel(1.001).label, '상대적 집중');
+  assert.equal(a.lqLevel(.999).label, '상대적 낮음');
+});
+
+test('real published LQs match direct primary-industry counts for each administrative dong', () => {
+  const context = vm.createContext({
+    window: { location: { search: '' } }, console, URLSearchParams,
+    document: { querySelector: () => null }, setTimeout, clearTimeout
+  });
+  for (const file of ['analysis.js', 'dong-boundaries.js', 'merchant-data.js', 'app.js']) {
+    vm.runInContext(fs.readFileSync(path.join(__dirname, '../static', file), 'utf8').replace(/main\(\);\s*$/, ''), context);
+  }
+  const items = vm.runInContext('window.DonggurangAnalysis.assignDongs(prepareMerchants(window.DONGGURANG_MERCHANTS), window.DONGGURANG_BOUNDARIES)', context);
+  const a = context.window.DonggurangAnalysis;
+  for (const f of context.window.DONGGURANG_BOUNDARIES.features) {
+    const result = a.locationQuotients(items, f.properties.name);
+    const local = items.filter((m) => m.analysisDong === f.properties.name);
+    assert.equal(result.total, local.length);
+    result.rows.forEach((row) => {
+      const localCount = local.filter((m) => m.group === row.group).length;
+      const districtCount = items.filter((m) => m.group === row.group).length;
+      assert.equal(row.count, localCount);
+      assert.equal(row.districtCount, districtCount);
+      const expected = local.length && districtCount ? (localCount / local.length) / (districtCount / items.length) : null;
+      assert.equal(row.lq, expected);
+    });
+  }
+});
