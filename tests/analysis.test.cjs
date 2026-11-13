@@ -55,3 +55,56 @@ test('grid bins preserve counts, ignore invalid coordinates, and stay fixed for 
   assert.equal(a.gridCells([], 250).length, 0);
   assert.equal(a.validPoint({ lat: 100, lng: 126 }), false);
 });
+
+test('dong comparison uses each dong denominator and primary industry, not absolute shop totals', () => {
+  const { DonggurangAnalysis: a } = setup();
+  const items = [
+    { analysisDong: 'A동', group: '음식점·카페', groups: ['음식점·카페', '식품·마트'] },
+    { analysisDong: 'A동', group: '식품·마트' },
+    { analysisDong: 'B동', group: '음식점·카페' },
+    { analysisDong: 'B동', group: '음식점·카페' },
+    { analysisDong: 'B동', group: '음식점·카페' },
+    { analysisDong: 'B동', group: '패션·뷰티' },
+    { analysisDong: '미분류', group: '기타' }
+  ];
+  const original = JSON.stringify(items);
+  const result = a.compareDongs(items, ['A동', 'B동']);
+  assert.deepEqual(Array.from(result.regions, (r) => r.total), [2, 4]);
+  const food = result.rows.find((r) => r.group === '음식점·카페');
+  assert.deepEqual(Array.from(food.values, (v) => [v.count, v.share, v.gap]), [[1, 50, 0], [3, 75, 25]]);
+  assert.equal(result.rows.find((r) => r.group === '식품·마트').values[1].gap, -50);
+  assert.equal(result.rows.length, 8);
+  result.regions.forEach((region, i) => {
+    assert.equal(result.rows.reduce((sum, row) => sum + row.values[i].count, 0), region.total);
+    assert.equal(result.rows.reduce((sum, row) => sum + row.values[i].share, 0), 100);
+  });
+  assert.equal(JSON.stringify(items), original);
+});
+
+test('comparison supports multiple dongs, deduplicates selections, and handles no data without NaN', () => {
+  const { DonggurangAnalysis: a } = setup();
+  const result = a.compareDongs([{ analysisDong: 'A동', group: '기타' }], ['A동', 'B동', 'C동', 'D동', 'A동']);
+  assert.equal(result.regions.length, 4);
+  assert.equal(result.regions[1].total, 0);
+  result.rows.forEach((row) => {
+    assert.equal(row.values[1].count, 0);
+    assert.equal(row.values[1].share, 0);
+    assert.equal(row.values[1].gap, null);
+  });
+  const emptyBase = a.compareDongs([{ analysisDong: 'B동', group: '기타' }], ['A동', 'B동']);
+  assert.equal(emptyBase.rows[7].values[1].gap, null);
+});
+
+test('real-data comparison for 계림2동 and 충장동 matches independent filtered totals', () => {
+  const { DonggurangAnalysis: a, DONGGURANG_BOUNDARIES: b, DONGGURANG_MERCHANTS: source } = setup();
+  const merchants = a.assignDongs(source.map((m) => ({ ...m, group: '기타' })), b);
+  const names = ['계림2동', '충장동'];
+  const result = a.compareDongs(merchants, names);
+  result.regions.forEach((region, i) => {
+    const expected = merchants.filter((m) => m.analysisDong === names[i]).length;
+    assert.ok(expected > 0);
+    assert.equal(region.total, expected);
+    assert.equal(result.rows[7].values[i].count, expected);
+    assert.equal(result.rows[7].values[i].share, 100);
+  });
+});

@@ -74,6 +74,19 @@
       </div>
       <p id="analysisStatus" role="status">분석 자료를 준비하고 있습니다.</p>
       <div class="analysis-summary" id="analysisSummary"></div>
+      <section class="analysis-card comparison-card" aria-labelledby="comparisonTitle">
+        <div class="analysis-card-heading"><div><h2 id="comparisonTitle">행정동 간 업종 구성 비교</h2><p>2~4개 동을 나란히 비교해 상대적으로 많은 업종을 살펴보세요.</p></div>
+          <div class="view-toggle" role="group" aria-label="행정동 비교 기준"><button type="button" data-comparison-metric="share" aria-pressed="true">구성비 (%)</button><button type="button" data-comparison-metric="count" aria-pressed="false">가맹점 수</button></div>
+        </div>
+        <div class="comparison-selectors" id="comparisonSelectors"></div>
+        <button class="comparison-add" id="comparisonAdd" type="button">+ 비교 지역 추가</button>
+        <p class="comparison-note">위의 업종·행정동 필터와 별개로 각 동의 전체 가맹점을 비교합니다. 구성비는 해당 동 전체 가맹점 중 업종별 비율입니다.</p>
+        <div id="comparisonSummary" class="comparison-summary" aria-live="polite"></div>
+        <div id="comparisonLegend" class="comparison-legend"></div>
+        <div id="comparisonChart" class="comparison-chart" role="region" tabindex="0" aria-label="업종 비교 차트"></div>
+        <div class="comparison-insights" id="comparisonInsights" aria-live="polite"></div>
+        <details class="comparison-details"><summary>업종별 건수·구성비·차이 자세히 보기</summary><div class="analysis-table-wrap"><table class="analysis-table comparison-table"><caption>구성비 차이는 비교 지역 A 대비 %포인트 차이입니다.</caption><thead id="comparisonTableHead"></thead><tbody id="comparisonTableBody"></tbody></table></div></details>
+      </section>
       <section class="analysis-card distribution-card" aria-labelledby="distributionTitle">
         <div class="analysis-card-heading"><div><h2 id="distributionTitle">업종별 분포도</h2><p>선택한 업종과 행정동의 공간 분포</p></div>
           <div class="distribution-controls"><div class="view-toggle" role="group" aria-label="분포도 표시 방식"><button type="button" data-analysis-mode="heat" aria-pressed="true">히트맵</button><button type="button" data-analysis-mode="grid" aria-pressed="false">격자</button></div>

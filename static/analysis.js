@@ -1,6 +1,8 @@
 /* Analysis is independent of map search and never changes source merchant records. */
 (() => {
   const UNKNOWN = "미분류";
+  const GROUPS = ["음식점·카페", "식품·마트", "패션·뷰티", "의료·건강", "교육·문화", "생활·주거", "스포츠·여가", "기타"];
+  const COMPARISON_COLORS = ["#367fe8", "#32894b", "#a363d9", "#c76c13"];
   const validPoint = (m) => Number.isFinite(m.lat) && Number.isFinite(m.lng) && Math.abs(m.lat) <= 90 && Math.abs(m.lng) <= 180;
   const html = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const number = (n) => n.toLocaleString("ko-KR");
@@ -43,16 +45,111 @@
     return [...cells.values()];
   }
 
+  // Each merchant contributes once through its primary industry; denominators are per dong.
+  function compareDongs(merchants, names) {
+    const regions = [...new Set(names)].map((name) => {
+      const items = merchants.filter((m) => m.analysisDong === name);
+      return { name, total: items.length, groups: new Map(counts(items, "group")) };
+    });
+    const rows = GROUPS.map((group) => ({ group, values: regions.map((region) => {
+      const count = region.groups.get(group) || 0;
+      return { count, share: region.total ? 100 * count / region.total : 0 };
+    }) }));
+    rows.forEach((row) => row.values.forEach((value, index) => {
+      value.gap = regions[0]?.total && regions[index]?.total ? value.share - row.values[0].share : null;
+    }));
+    return { regions: regions.map(({ name, total }) => ({ name, total })), rows };
+  }
+
   function init({ state, prepareMerchants, loadStaticMerchants, invalidateMapSize }) {
     const $ = (id) => document.getElementById(id);
     if (!$("analysisTab")) return;
     const boundaries = window.DONGGURANG_BOUNDARIES;
-    const groups = ["음식점·카페", "식품·마트", "패션·뷰티", "의료·건강", "교육·문화", "생활·주거", "스포츠·여가", "기타"];
+    const groups = GROUPS;
     let map, overlay, heat, boundaryLayer, merchants, loading, mode = "heat", selected = [];
     const category = $("analysisCategory"), dong = $("analysisDong");
     groups.forEach((g) => category.add(new Option(g, g)));
     boundaries?.features.forEach((f) => dong.add(new Option(f.properties.name, f.properties.name)));
     dong.add(new Option(UNKNOWN, UNKNOWN));
+    const dongNames = boundaries?.features.map((f) => f.properties.name) || [];
+    let comparisonNames = ["계림2동", "충장동"].filter((name) => dongNames.includes(name));
+    if (comparisonNames.length < 2) comparisonNames = dongNames.slice(0, 2);
+    let comparisonMetric = "share";
+
+    function renderComparisonSelectors() {
+      $("comparisonSelectors").innerHTML = comparisonNames.map((name, index) => `<div class="comparison-selector"><label for="comparisonDong${index}"><span class="comparison-dot" style="background:${COMPARISON_COLORS[index]}"></span>비교 지역 ${String.fromCharCode(65 + index)}</label><div><select id="comparisonDong${index}" data-comparison-index="${index}">${dongNames.map((n) => `<option value="${html(n)}"${name === n ? " selected" : ""}${name !== n && comparisonNames.includes(n) ? " disabled" : ""}>${html(n)}</option>`).join("")}</select>${index > 1 ? `<button type="button" data-remove-comparison="${index}" aria-label="비교 지역 ${String.fromCharCode(65 + index)} 삭제">삭제</button>` : ""}</div></div>`).join("");
+      $("comparisonAdd").disabled = comparisonNames.length >= Math.min(4, dongNames.length);
+    }
+    function renderComparison() {
+      if (!merchants) return;
+      const { regions, rows } = compareDongs(merchants, comparisonNames);
+      const metric = comparisonMetric, share = metric === "share";
+      const gap = (value) => value === null ? "비교 불가" : Math.abs(value) < .05 ? "0.0%p" : `${value > 0 ? "+" : ""}${value.toFixed(1)}%p`;
+      $("comparisonSummary").innerHTML = regions.map((region, i) => `<div style="border-top-color:${COMPARISON_COLORS[i]}"><span>${String.fromCharCode(65 + i)} · ${html(region.name)}</span><strong>${number(region.total)}곳</strong>${region.total ? "" : '<small>등록 가맹점 없음 · 구성비 비교 불가</small>'}</div>`).join("");
+      $("comparisonLegend").innerHTML = regions.map((region, i) => `<span><span class="comparison-dot" style="background:${COMPARISON_COLORS[i]}"></span>${String.fromCharCode(65 + i)} · ${html(region.name)}</span>`).join("");
+      const width = regions.length > 2 ? 960 : 760, height = 350;
+      const left = 48, top = 24, bottom = 60, plotWidth = width - left - 16, plotHeight = height - top - bottom;
+      const max = Math.max(1, ...rows.flatMap((row) => row.values.map((v) => v[metric])));
+      const step = share ? Math.max(5, Math.ceil(max / 25) * 5) : Math.max(1, Math.ceil(max / 5 / (10 ** Math.floor(Math.log10(max / 5)))) * (10 ** Math.floor(Math.log10(max / 5))));
+      const ceiling = Math.ceil(max / step) * step;
+      const ticks = Array.from({ length: Math.round(ceiling / step) + 1 }, (_, i) => i * step);
+      const columnWidth = plotWidth / rows.length, barGap = 3, barWidth = Math.min(30, (columnWidth - 20) / regions.length - barGap);
+      const grid = ticks.map((value) => {
+        const y = top + plotHeight * (1 - value / ceiling);
+        return `<line x1="${left}" x2="${width - 16}" y1="${y}" y2="${y}" stroke="#dce4ed" stroke-dasharray="4 4"/><text x="${left - 9}" y="${y + 4}" text-anchor="end" class="comparison-axis">${number(value)}${share ? "%" : ""}</text>`;
+      }).join("");
+      const columns = rows.map((row, rowIndex) => {
+        const center = left + columnWidth * (rowIndex + .5);
+        const bars = row.values.map((value, i) => {
+          const barHeight = plotHeight * value[metric] / ceiling;
+          const x = center - (regions.length * (barWidth + barGap) - barGap) / 2 + i * (barWidth + barGap);
+          const y = top + plotHeight - barHeight;
+          return `<g><title>${html(regions[i].name)} · ${html(row.group)}: ${number(value.count)}곳, ${value.share.toFixed(1)}%${i ? ` (A 대비 ${gap(value.gap)})` : ""}</title><rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="4" fill="${COMPARISON_COLORS[i]}"/><text x="${x + barWidth / 2}" y="${y - 5}" text-anchor="middle" class="comparison-value">${share ? value.share.toFixed(1) : number(value.count)}</text></g>`;
+        }).join("");
+        const parts = row.group.split("·");
+        return bars + `<text x="${center}" y="${height - 36}" text-anchor="middle" class="comparison-axis">${parts.map((part, i) => `<tspan x="${center}" dy="${i ? 17 : 0}">${html(part)}</tspan>`).join("")}</text>`;
+      }).join("");
+      $("comparisonChart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" style="min-width:${width}px" role="img" aria-labelledby="comparisonChartTitle comparisonChartDescription"><title id="comparisonChartTitle">${html(regions.map((r) => r.name).join(" · "))} 업종별 ${share ? "구성비" : "가맹점 수"} 비교</title><desc id="comparisonChartDescription">각 업종에서 A부터 순서대로 동별 막대를 표시합니다. 정확한 수치는 아래 업종별 상세 표에서 확인할 수 있습니다.</desc>${grid}${columns}</svg>`;
+      $("comparisonTableHead").innerHTML = `<tr><th scope="col">업종</th>${regions.map((region, i) => `<th scope="col">${html(region.name)}<br>가맹점 수 / 구성비${i ? " / A 대비" : ""}</th>`).join("")}</tr>`;
+      $("comparisonTableBody").innerHTML = rows.map((row) => `<tr><th scope="row">${html(row.group)}</th>${row.values.map((value, i) => `<td>${number(value.count)}곳 / ${value.share.toFixed(1)}%${i ? ` / ${gap(value.gap)}` : ""}</td>`).join("")}</tr>`).join("");
+      $("comparisonInsights").innerHTML = regions.slice(1).map((region, index) => {
+        const i = index + 1;
+        if (!region.total || !regions[0].total) return `<p>${html(regions[0].name)} · ${html(region.name)}: 가맹점이 없는 동이 있어 구성비 차이를 계산하지 않습니다.</p>`;
+        const ordered = [...rows].sort((a, b) => b.values[i].gap - a.values[i].gap);
+        const higher = ordered.find((row) => row.values[i].gap >= .05);
+        const lower = [...ordered].reverse().find((row) => row.values[i].gap <= -.05);
+        if (!higher && !lower) return `<p>${html(region.name)}과 ${html(regions[0].name)}의 업종 구성비가 같습니다.</p>`;
+        return `<p><strong>${html(region.name)}</strong>은 ${html(regions[0].name)}보다 ${higher ? `<strong>${html(higher.group)}</strong> 비중이 ${higher.values[i].gap.toFixed(1)}%p 높고` : ""}${higher && lower ? ", " : ""}${lower ? `<strong>${html(lower.group)}</strong> 비중이 ${Math.abs(lower.values[i].gap).toFixed(1)}%p 낮습니다` : ""}.</p>`;
+      }).join("");
+      $("comparisonChart").setAttribute("aria-label", share ? "업종 구성비 비교 차트, 가로로 스크롤할 수 있습니다" : "업종별 가맹점 수 비교 차트, 가로로 스크롤할 수 있습니다");
+    }
+    renderComparisonSelectors();
+    $("comparisonSelectors").addEventListener("change", (event) => {
+      if (!event.target.matches("[data-comparison-index]")) return;
+      const index = Number(event.target.dataset.comparisonIndex), name = event.target.value;
+      if (!dongNames.includes(name) || comparisonNames.some((n, i) => i !== index && n === name)) return;
+      comparisonNames[index] = name;
+      renderComparisonSelectors(); renderComparison();
+      $(`comparisonDong${index}`).focus();
+    });
+    $("comparisonSelectors").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-remove-comparison]");
+      if (!button) return;
+      comparisonNames.splice(Number(button.dataset.removeComparison), 1);
+      renderComparisonSelectors(); renderComparison(); $("comparisonAdd").focus();
+    });
+    $("comparisonAdd").addEventListener("click", () => {
+      if (comparisonNames.length >= 4) return;
+      const name = dongNames.find((n) => !comparisonNames.includes(n));
+      if (!name) return;
+      comparisonNames.push(name); renderComparisonSelectors(); renderComparison();
+      $(`comparisonDong${comparisonNames.length - 1}`).focus();
+    });
+    document.querySelectorAll("[data-comparison-metric]").forEach((button) => button.addEventListener("click", () => {
+      comparisonMetric = button.dataset.comparisonMetric;
+      document.querySelectorAll("[data-comparison-metric]").forEach((b) => b.setAttribute("aria-pressed", b === button));
+      renderComparison();
+    }));
 
     function makeHeatLayer() {
       return new (L.Layer.extend({
@@ -168,7 +265,7 @@
             merchants = assignDongs(items, boundaries);
           }
           if ($("analysisPanel").hidden) return;
-          initMap(); map.invalidateSize(); render(true);
+          initMap(); map.invalidateSize(); render(true); renderComparison();
         } catch (error) {
           console.error("Analysis unavailable", error);
           $("analysisStatus").textContent = "분석 자료를 불러오지 못했습니다. 분석 탭을 다시 눌러 재시도해 주세요.";
@@ -203,5 +300,5 @@
     }));
     window.addEventListener("resize", () => { if (map && !$("analysisPanel").hidden) map.invalidateSize(); });
   }
-  window.DonggurangAnalysis = { init, inGeometry, assignDongs, counts, gridCells, validPoint };
+  window.DonggurangAnalysis = { init, inGeometry, assignDongs, counts, gridCells, validPoint, compareDongs };
 })();
