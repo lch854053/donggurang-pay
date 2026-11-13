@@ -49,8 +49,12 @@ test('published numbers agree with audit and only refer to existing merchants', 
   const ids = new Set(merchants.map((item) => String(item.id)));
   const audit = JSON.parse(fs.readFileSync(new URL('../reports/merchant-phones.json', import.meta.url), 'utf8'));
   assert.equal(Object.keys(phones).length, metadata.phoneCount);
-  assert.equal(audit.results.length, merchants.length);
-  assert.equal(audit.results.filter((item) => item.reason === 'matched').length, metadata.phoneCount);
+  // Preserve the original lookup audit; IDs 2936, 3965 and 3973 were subsequently removed by request.
+  const removedIds = [2936, 3965, 3973];
+  const retainedResults = audit.results.filter((item) => !removedIds.includes(item.id));
+  assert.equal(retainedResults.length, merchants.length);
+  assert.equal(retainedResults.filter((item) => item.reason === 'matched').length, metadata.phoneCount);
+  for (const removedId of removedIds) assert.equal(phones[removedId], undefined);
   for (const [id, entry] of Object.entries(phones)) {
     assert.ok(ids.has(id));
     assert.equal(normalizePhone(entry.phone), entry.phone);
